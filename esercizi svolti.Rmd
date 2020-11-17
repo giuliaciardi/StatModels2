@@ -1,0 +1,1421 @@
+---
+title: "Esercizi"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+
+
+#Esercizio 1
+Creare una sequenza di lunghezza 200 che parte da -pigreco ed arriva a pigreco
+```{r}
+x <- seq(-pi,pi,length.out=200)
+head(x)
+```
+
+#Esercizio 2
+Si utilizzi il ciclo for per ottenere il risultato della seguente espressione per a = 15, . . . , 30.
+f(a) = cos(sin(a) ??? a^2) + 3
+ed il cui output sia f(a)-5.
+
+Utilizzo una funzione.
+```{r}
+f <- function(x){
+  y <- cos(sin(x)*(x)^2)+3
+  return(y-5)
+}
+
+v <- seq(15,30,1)
+f(v)
+```
+
+Utilizzo il ciclo for.
+```{r}
+vettore <- rep(0,16)
+for(i in 1:16){
+ vettore[i] <-  f(v[i])
+ 
+}
+vettore
+```
+
+#Esercizio 3
+Si considerino i dati contenuti nella libreria di R denominata ISwR denominati thuesen. Utilizzando i record relativi alla velocità ventricolare per i pazienti diabetici si considerino i seguenti punti:
+###3.1
+Si descrivano i dati utilizzando gli indici di statistica descrittiva e si riportino le statistiche scelte commentando i risultati in relazione al contesto;
+```{r}
+#install.packages("ISwR")
+library("ISwR")
+dati <- data(thuesen)
+vv <- thuesen$short.velocity
+length(vv)
+summary(vv)
+sd(vv)
+```
+*I dati presenti nel dataset hanno lunghezza 24, di cui 1 valore mancante. La media della velocità ventricolare è di 1.3%/s. Il valore massimo è 1.95 e il valore minimo è 1.03, quindi il range di variazione è di circa 1%/s. Lo scarto interquantile è do circa 0.2 %s*
+
+###3.2
+Si escludano le osservazioni in cui sono presenti valori mancanti. Si ripetano le analisi effettuate al punto precedente e si commentino di nuovo i risultati.
+```{r}
+complete.cases(vv)
+vv1 <- vv[-16]
+mean(vv,na.rm=T)
+sd(vv, na.rm=T)
+```
+*La variabilità nel campione, rappresentata dallo scarto quadratico medio, è di +- 0.23 %s.*
+
+###3.3
+Si rappresentino i dati ottenuti al punto precedente attraverso i grafici ritenuti opportuni e si riportino i grafici ed i commenti che mettano in luce caratterische più salienti;
+
+Scegliamo di rappresentare i dati tramite:
+####plot dei punti
+```{r}
+media <- mean(vv, na.rm=T)
+plot(vv1,     main="Plot dei punti", ylab="Velocità ventricolare")
+abline(h=media,       col="red",       lty=3)
+```
+*I punti sembrano ben distribuiti attorno al valore medio del campione. La maggior parte dei valori lontani dalla media sono molto maggiori di essa.*
+
+####Funzione di ripartizione
+```{r}
+plot(ecdf(vv1),     main="FdR empirica", do.point=F)
+```
+*Osserviamo un andamento piuttosto lineare, ad eccezione di punti nella parte alta che si discostano dalla linearità della distribuzione.*
+
+####Boxplot
+```{r}
+boxplot(vv1,        main="Boxplot", col = "red1")
+```
+*Il boxplot permette di osservare meglio di qualunque altro grafico i valori più estremi. In questo caso osserviamo un valore che esce dalla distribuzione rispetto al baffo superiore. La distanza tra il 1 e il 3 quantile è compatta, e la coda inferiore non è lunga.*
+
+####Istogramma
+```{r}
+hist(vv1, freq=F, breaks=10, col="red3", ylim=c(0,2.5), main="Istogramma",
+     xlab="Velocità ventricolare")
+```
+
+###3.4
+Si riporti il grafico della funzione di autocorrelazione e si commenti.
+```{r}
+acf(vv1,     main="Funzione di autocorrelazione", lwd=3, col="red3", lag.max = 23)
+```
+*Il grafico non evidenzia nessuna correlazione.*
+
+
+#Esercizio 4
+##Appl: dataframe
+Si consideri il seguente scenario dove in uno studio clinico sono stati reclutati 120 soggetti, 60 maschi e 60 femmine. I soggetti sono stati selezionati in modo da avere lo stesso numero di persone per ciascun gruppo sanguigno (A, B, AB and 0) in ogni gruppo. Si considerino i seguenti punti:
+###4.1 e 4.2
+Si crei un data frame che rispecchi la seguente situazione utilizzando la funzione 'rep' e si stampi a schermo una tabella a doppia entrata per verificare che i gruppi siano bilanciati
+```{r}
+A <- rep("A",15)
+B <- rep("B",15)
+AB <- rep("AB",15)
+O <-  rep("0",15)
+
+MM <- rep("M", 60)
+FF <- rep("F",60)
+
+SM <- cbind(c(A,B,AB,O),MM)
+SF <- cbind(c(A,B,AB,O),FF)
+
+dat <- data.frame(rbind(SM,SF))
+
+names(dat) <- c("Blood","Gen")
+
+table(dat)
+```
+
+
+Si può fare tramite il seguente codice
+```{r}
+n <- 120
+df <- data.frame(sex=rep(c("M","F"),each=n/2),
+                 bty=rep(c("A","B","AB","0"), length.out=n))
+
+xtabs(data = df)
+#table(df)
+head(df)
+```
+*I gruppi sono  bilanciati.*
+
+###4.3
+Si aggiunga una colonna al data.frame che contenga un numero progressivo per identificare i soggetti.
+```{r}
+id <- seq(1:120)
+ndf <- data.frame(id,df)
+head(ndf)
+```
+
+
+#Esercizio 5
+Nel dataset Orange, incluso in R, sono riportate le misurazioni della circonferenza di alcuni alberi di arancio. Si considerino i seguenti punti.
+
+###5.1
+Si riportino le statistiche descrittive dei dati relativi alla circonferenza e si commentino.
+```{r}
+data("Orange")
+head(Orange)
+```
+
+```{r}
+length(Orange$circumference)
+summary(Orange$circumference)
+sd(Orange$circumference)
+```
+
+###5.2
+Si ottengano le misurazioni tali che siano scelte per la media e divise per la deviazione standard. In pratica normalizzo le osservazioni.
+```{r}
+m <- mean(Orange$circumference)
+sd <- sd(Orange$circumference)
+circ <- (Orange$circumference-m)/sd; circ
+```
+
+```{r}
+summary(circ)
+sd(circ)
+```
+*Avendo normalizzato le osservazioni, risultano di media nulla e varianza 1*
+*Il range di variazione, compreso tra -1.49 e 1.7, indica a priori che i dati non possono essere considerati delle realizzazioni pseudo-casuali, perchè non cadono in 0-1.*
+
+###5.3
+Si stabilisca attraverso i test grafici se quest'ultime possono essere assunte come determinazioni pseudo-casuali.
+
+```{r}
+par(mfrow=c(1,2))
+plot(circ, main="Scatter plot",      col="green")
+hist(circ,     xlim=c(-2,2),
+     breaks=15,     main="Istogramma", col="green", xlab="Misure di Circonferenza" )
+```
+*Entrambi i grafici mostrano che i dati non possono essere pseudo-casuali. Si nota infatti la presenza di distribuzioni distinte. L'istogramma presenta delle barre verticali molto alte rispetto alle altre, il che indica delle frequenze molto alte per determinati valori. Questo non è compatibile con valori casuali uniformi.*
+
+```{r}
+plot(ecdf(circ),
+     do.points=F,
+     main="FdRe")
+curve(punif, col="blue", add=T)
+```
+*Ulteriore verifica di non pseudo-casualità.*
+
+###5.4
+Calcolo la media di circonferenza per gruppo.
+```{r}
+tapply(Orange$circumference, Orange$Tree, mean)
+```
+
+#Esercizio 6
+
+###6.1
+Si implementi il codice illustrato durante la lezione n.4  in modo da poter confrontare 2 istogrammi per i dati generati da una distribuzione uniforme continua in (0,1) e una uniforme continua in (2,3) e un'altra uniforme continua in (5,10). Si riportino gli istogrammi nella stessa finestra grafica.
+
+```{r}
+ran1 <- runif(1000,0,1)
+ran2 <- runif(1000,2,3)
+ran3 <- runif(1000,5,10)
+
+par(mfrow=c(1,3))
+hist(ran1, col="red",
+     breaks=14,
+     freq=F,
+     ylim = c(0,1.2),
+     main="Istogramma", xlab = "numeri pseudo-casuali da u(0,1)",
+     ylab = "Densità di frequenza")
+hist(ran2, col="goldenrod",
+     breaks=14,
+     freq=F,
+     ylim = c(0,1.2),
+     main="Istogramma", xlab = "numeri pseudo-casuali da u(2,3)",
+     ylab = "Densità di frequenza")
+hist(ran3, col="pink",
+     breaks=14,
+     freq=F,
+     ylim = c(0,0.5),
+     main="Istogramma", xlab = "numeri pseudo-casuali da u(5,10)",
+     ylab = "Densità di frequenza")
+```
+*Gli istogrammi generati presentano effettivamente una distribuzione con densità uniformente distribuita sui valori di x.*
+
+###6.2
+Si riportino i grafici delle funzioni di autocorrelazione nella stessa finestra grafica e si risponda alle seguenti domande:
+- si può supporre dal grafico che le osservazioni non presentano autocorrelazione? Perchè?
+- Si osservano differenze tra i tre grafici?
+- Si osservano differenze se si modifica il 'lag' utilizzando il massimo lag possible? (si riportino i grafici della funzione di autocorrelazione anche in questo caso).
+
+```{r}
+par(mfrow=c(1,3))
+acf(ran1, main="ACF di U(0,1)")
+acf(ran2, main="ACF di U(2,3)")
+acf(ran3, main="ACF di U(5,10)")
+```
+*Le funzioni non presentano autocorrelazione, perchè nessun valore della funzione oltrepassa i limiti di benchmark. Questo vale per tutte le 3 serie di valori. Tutti i punti risultano all'interno dei limiti entro cui vale l'ipotesi nulla di assenza di autocorrelazione.*
+
+Portando il lag al valore massimo di default.
+```{r}
+par(mfrow=c(1,3))
+acf(ran1, lag.max=T, main="ACF di U(0,1)", xlab="Lag max")
+acf(ran2,lag.max=T, main="ACF di U(2,3)",xlab="Lag max")
+acf(ran3,lag.max=T, main="ACF di U(5,10)",xlab="Lag max")
+```
+
+#Esercizio 7
+Si importino i dati denomianti rand1.csv. Si esegua il test di Kolmogorov-Smirnov e si commenti il risultato.
+
+Prima di tutto si predisponga la working directory nella cartella del file .Rmd dove sono anche i dati.
+Per mettere il file rmd nella stessa directory di lavoro dei dati da importare.
+```{r}
+setwd("C:/Users/giuli/Desktop/chiavetta/Modelli 2 1718")
+```
+
+
+```{r}
+library(readr)
+rand1 <- read_csv("C:/Users/giuli/Desktop/chiavetta/Modelli 2 1718/rand1.csv", 
+    col_names = FALSE)
+
+```
+ 
+Una prima verifica di uniformità la ottengo calcolando la media. Mi aspetto sia 0.5
+```{r}
+x1 <- rand1$X1
+mean(x1)
+```
+
+Tramite il test di K-S, voglio vedere se il campione proviene da una uniforme in [0-1]. Per fare questo il test confronta le funzioni di ripartizione teorica ed empirica. H0: cdf=ecdf 
+```{r}
+ks.test(x1,punif)
+```
+*La statistica test ha un valore osservato pari a 0.15. Con un p-value < 0.05, rifiuto l'ipotesi nulla per la quale x1 provenga da una distribuzione uniforme.* 
+Rieseguo il test modificando il livello di confidenza a 0.01 e 0.10.
+```{r}
+ks.test(x1, "punif", 0.01 )
+```
+*Ora accetto.*
+
+#Esercizio 8
+Si consideri il seguente sito https://www.random.org/ che permette di generare delle sequenze di numeri pseudo-casuali (Number-> Decimal Fractions).
+###8.1
+Si generi una sequenza di 500 valori e si importino i dati in R
+
+
+###8.2
+Si riportino in un unica finestra grafica i 4 grafici che permettono di effettuare dei test sulla pseudocasualità e si commentino
+
+###8.3
+Si riporti la frequenza relativa dei numeri simulati compresi tra 0.3 e 0.7.
+
+
+#Esercizio 9
+I dati denominati lh sono a regular time series giving the luteinizing hormone in blood samples at 10 mins intervals from a human female, 48 samples.
+La secrezione di ormone luteinizzante è regolata dal fattore ipotalamico di liberazione delle gonadotropine (GnRH), un ormone prodotto dai neuroni ipotalamici del nucleo arcuato e dell'area preottica. Quando il GnRH si lega a specifici recettori posti sulla membrana di cellule gonadotrope, un tipo cellulare adenoipofisiario, viene attivata una cascata di segnali intracellulari che portano alla secrezione dell'ormone luteinizzante.
+
+I valori sono riferiti alla stessa persona e sono rilevati ogni 10 minuti.
+
+###9.1
+Si richiedano i dati in R e si legga la pagina di descrizione nell'help di R; si riportino e si commentino le statistiche descrittive.
+```{r}
+data("lh")
+lh
+```
+
+```{r}
+summary(lh)
+sd(lh)
+```
+*I 48 valori della serie presentano una media di 2.4, un valore massimo di 3.5 e un valore minimo di 1.4. Hanno deviazione standard pari a +-0.55. Si tratta pertanto di verificare se le oscillazioni intorno alla media pari a 0.55 sono dovute al momento della rilevazione.*
+
+```{r}
+plot(lh,     main="Serie temporale")
+abline(h=mean(lh), col="red")
+```
+*Dal grafico precente si nota che la variabilità rispetto alla valore medio sembra superiore per le ultime rilevazioni.*
+
+###9.2
+Si disegni la funzione di autocorrelazione campionaria per tre diversi valori del lag-temporale, di cui uno pari al lag-max di default.
+Il lag di default è 10*log10(48) cioè pari a circa 16.8
+```{r}
+par(mfrow=c(3,1))
+acf(lh, main="Funzione di autocorrelazione lag 20", lag.max = 20)
+acf(lh, main="Funzione di autocorrelazione lag 48", lag.max = 48)
+acf(lh, main="Funzione di autocorrelazione lag di default")
+```
+*I valori osservati risultano autocorrelati al lag 1. Ciò indica che c'è una correlazione tra i valori consecutivi della serie.*
+*Dal grafico della funzione di autocorrelazione si nota che il primo coefficiente di autocorrelazione è superiore al valore atteso sotto l'ipotesi di incorrelazione. Mentre gli altri risultano in linea con quelli attesi sotto l'ipotesi di assenza di autocorrelazione anche se si nota l'andamento a sinusoide dei coefficienti nel tempo.*
+
+###9.3
+Si disegni la funzione di ripartizione empirica e si commenti.
+```{r}
+plot(ecdf(lh),     main="Funzione di ripartizione empirica", do.point=F)
+curve(pnorm(x,mean(lh),sd(lh)), lty='dashed', col='red', add=TRUE)
+```
+*La funzione non mostra salti importanti. Si nota che la funzione di ripartizione cresce a forma di S, pertanto si potrebbe confrontare con una funzione di ripartizione di una variabile casuale con distribuzione di Gauss che ha media e varianza pari a quella campionaria.*
+
+###9.4
+Si effettui il test non parametrico di Kolmogorov-Smirnov per verificare se la funzione di cui al punto precedente è assimilabile a quella di una variabile casuale con distribuzione di Gauss con valore atteso e varianza pari a quelle campionarie.
+```{r}
+m <- mean(lh)
+sd <- sd(lh)
+ks.test(lh, "pnorm", m, sd)
+```
+*Il valore della statistica test D = 0.10 ed il livello di significatività 0.67 inducono ad accettare l'ipotesi nulla H0 : F(x) = F0(x) di aderenza della funzione di ripartizione empirica a quella teorica di una variabile casuale di Gauss con media e varianza uguali a quelle campionarie.*
+
+Dal warning si desume che ci sono identici valori osservati e che il test non considera quando si applica la funzione ks.test.
+Dalla seguente tabella di frequenza si nota che quasi tutti i valori si ripetono, alcuni anche 4 volte. Per cui il test viene effettuato solo su un numero esiguo di valori ed il p-value non è molto indicativo.
+```{r}
+table(lh)
+```
+
+
+#Esercizio 10
+###10.1
+Si generino 3000 realizzazioni dalla variabile casuale S4 che risulta dalla convoluzione S4 = X1+X2+X3+X4 supposte indipendenti e aventi una distribuzione esponenziale con valore del parametro pari a lambda = 0.03.
+```{r}
+s4 <- replicate(3000, sum(rexp(n=4, rate = 0.03)))
+mean(s4)
+```
+*La media delle replicazioni è circa 133*
+
+###10.2
+Utilizzando la funzione implementata a lezione denominata genexp si ottengano le realizzazioni da S4 quando il valore del parametro è supposto pari a l = 0.2, poi pari a l = 0.7, e poi pari a l = 0.9.
+```{r}
+rates <- c(0.2,0.7,0.9)
+set.seed(1834)
+n <- 3000
+genexp <- lapply(rates, function(r){
+replicate(n, sum(rexp(n = 4, rate = r)))
+})
+```
+
+###10.3
+Si riportino i valori delle statistiche descrittive dei dati e si commentino.
+```{r}
+summary(s4)
+sd(s4)
+```
+
+Riporto il summary per le convoluzioni di esponenziali con parametri differenti.
+```{r}
+summary(genexp[[1]])
+summary(genexp[[2]])
+summary(genexp[[3]])
+```
+
+
+###10.4
+Si riportino le funzioni di ripartizione nella stessa finestra grafica inserendo la legenda.
+```{r}
+s1 <- genexp[[1]]
+s2 <- genexp[[2]]
+s3 <- genexp[[3]]
+
+plot(ecdf(s1), do.point=F, col="grey", main="Funzione di ripartizione")
+plot(ecdf(s2), do.point=F, col="green", add=T)
+plot(ecdf(s3), do.point=F, col="blue", add=T)
+
+cols <- c("grey","green","blue")
+names <- c("l=0.2", "l=0.7", "l=0.9")
+legend(40,0.8, names, col=cols, bg="white", cex=1.4, lty=1)
+```
+
+
+###10.5
+Si stabilisca la relazione con la variabile casuale Gamma quando l = 0.7. Si utilizzi la funzione dgamma per generare il grafico della funzione di densità in R.
+```{r}
+hist(s2,breaks=100, ylim = c(0,0.20),freq=FALSE,
+     main = "Valori generati dalla convoluzione vs distribuzione Gamma l=0.7",
+     xlab = "Valori generati")
+curve(dgamma(x, 4, 0.7), col = "red", add=TRUE)
+
+legend(15, 0.10, c( "conv. exp con l = 0.7", "dens. Gamma(4,0.7)"),
+col = c("Black", "red"),
+bg = "gray95",
+lty=c(1,1,1),
+cex = 0.6)
+```
+
+
+#Esercizio 11
+
+###11.1
+Si utilizzi la funzione rbinom per generare tre serie di realizzazioni di numerosità pari a 1000 dalla variabile casuale Binomiale rispetto ad almeno 3 valori diversi dei parametri.
+```{r}
+n <- 1000
+B1 <- rbinom(n,1,0.1)
+#B1a <- rbinom(n,100,0.1)
+B2 <- rbinom(n,2,0.4)
+B3 <- rbinom(n,3,0.7)
+table(B1)
+table(B2)
+table(B3)
+```
+
+###11.2
+Si disegnino le 3 funzioni di ripartizione empiriche e si inserisca la legenda.
+```{r}
+plot(ecdf(B1))
+plot(ecdf(B2), add=T, col="red")
+plot(ecdf(B3),add=T, col="green")
+legend(-1,0.6, c("Bin(1, 0.1)","Bin(2,0.4)","Bin(3,0.7)"),lty=1,
+       col=c("black","red","green"),
+       bg="gray95", cex=1)
+```
+
+#Esercizio 12
+Disegnare in un unico grafico le differenti forme assumibili dalla densità della variabile casuale Beta ultilizzando la funzione di R e considerando i seguenti valori del parametro a = b = 1; a < 1, b < 1; a = b = 2;a = 2, b = 6. Inserire la legenda.
+
+```{r}
+curve(dbeta(x,1,1),
+      ylim=c(0,3),
+      ylab="Densità",
+      xlim=c(0,1), lwd=3, lty=3,
+      main="Confronto densità di Beta")
+curve(dbeta(x,0.1,0.9), add=T,lty=3, col="green",lwd=3)
+curve(dbeta(x,2,2), add=T,lty=3,col="pink",lwd=3)
+curve(dbeta(x,2,6), add=T,lty=3, col="blue",lwd=3)
+
+legend(0.6,3, c("1,1","0.1,0.9","2,2","2,6"),
+       col=c("black","green","pink","blue"), lty = 3,lwd=2,
+       bg="gray95", cex=1)
+```
+
+#Esercizio 13
+Si utilizzino i dati presenti nel file surimi.R che riguardano una proteina animale impiegata nei prodotti alimentari. Si intende validare la solidità della gelatina prodotta con questa sostanza utilizzando dei campioni estratti da vari lotti di produzione. I dati riportano la resistenza del gel rilevata con appositi strumenti.
+
+###13.1
+Si descrivano i dati e si consideri la media arimentica come valore di interesse
+```{r}
+x<- c(41.28, 45.16, 34.75, 40.76, 43.61, 39.05, 41.20, 41.02, 41.33, 40.61, 40.49, 41.77, 42.07,
+      44.83, 29.12, 45.59, 41.95, 45.78, 42.89, 40.42, 49.31, 44.01, 34.87, 38.60, 39.63, 38.52, 38.52,
+      43.95, 49.08, 50.52, 43.85, 40.64, 45.86, 41.25, 50.35, 45.18, 39.67, 43.89, 43.89, 42.16)
+length(x)
+summary(x)
+sd(x)
+```
+*- Tipologia dati: I dati sono numerici e continui. Il campione osservato contiene 40 valori.*
+*- Il campo di variazione spazia da un minimo di 29 e un massimo di 50.5 per la misura di resistenza del gel.*
+*- Distanza media e mediana: sono simili per cui si immagina una distribuzione simmetrica.*
+*La media aritmetica dei dati è 42.19, mentre lo sqm è di +/- 4*
+
+Visualizzo le osservazioni tramite un plot, su cui applico il valore medio.
+```{r}
+plot(x,     main="Dispersione dei dati osservati")
+abline(h=mean(x), col="blue", lwd=4)
+```
+*La distribuzione dei dati attorno al loro valor medio è abbastanza omogenea, ad eccezione di alcuni punti che si distaccano di molto sia sopra che sotto. Per vedere meglio la presenza di questi punti distanti mostro il boxplot*
+
+```{r}
+boxplot(x)
+```
+*In particolare vedo che ci sono sul totale dei 40 2 punti che risultano fuori dalla copertura dello scarto interquartile,ovvero fuori dalla fascia di valori che contiene la metà "centrale" dei valori osservati.*
+
+###13.2
+Utilizzando il for e la funzione sample si calcolino le replicazioni bootstrap che si ottengono quando si utilizza un numero di campioni bootstrap pari a 200 e si descrivano i risultati.
+Nel seguente si implementa il codice per ottenere le 200 replicazioni bootstrap.
+Lo stimatore d'interesse è la media aritmetica.
+```{r}
+n <- length(x)
+B <- 200
+meanboot <- rep(0,B)
+
+for (i in 1:B){
+  ind <- sample(1:n, n, replace = T)
+  vb <- x[ind]
+  mu <- mean(vb)    #creo lo stimatore di ogni vettore replicato
+  meanboot[i] <- mu   #creo il vettore degli stimatori
+}
+
+```
+
+L'oggetto meanboot contiene le replicazioni, riassunte attraverso il summary.
+```{r}
+summary(meanboot)
+mean(meanboot)
+sd(meanboot)
+```
+*Una rapida occhiata al campione delle 200 replicazioni bootstrap: la media delle replicazioni è molto vicina al valore osservato nel campione originale (42.19). Il campo di variazione va da 40.15 a 43.69, per cui si osserva una distribuzione concentrata dei valori. La sd è molto bassa e risulta simile a quella attesa in base alle assunzioni parametriche della variabile casuale che rappresenta lo stimatore media campionaria.*
+
+###13.3
+Si riporti la distribuzione bootstrap dello stimatore in forma grafica e si commenti la figura.
+
+Procedo a creare un istogramma delle replicazioni boostrap ottenute.
+Inoltre calcolo i limiti di confidenza al 95% per la distribuzione ottenuta, tramite il metodo del percentile.
+```{r}
+hist(meanboot, col="pink", freq=F, breaks = 200,
+     main="Istogramma bootstrap B:200",
+     xlim=c(40,45),
+     xlab="Realizzazioni bootstrap del valore dello stimatore media")
+abline(v=c(mean(meanboot),mean(x)), col=c("blue","lightblue"), lwd=c(2,2))
+
+qq <- quantile(meanboot, c(0.025,0.975))
+abline(v=c(qq[1],qq[2]), col=c("orange","orange"), lwd=c(2,2))
+
+legend(43, 0.4, c("Media osservata", "Media bootstrap", "IC 95%"),
+        lty=c(1,1), col=c("lightblue","blue", "orange"), bg="white",
+        cex=0.8)
+```
+
+*Osservando l'istogramma bootstrap, notiamo che la media delle replicazioni boot e la media osservata nel campione originario sono quasi coincidenti, come già indicato in precedenza. Da questo risultato possiamo dire che lo stimatore media aritmetica è corretto.*
+
+###13.4 
+Si stabilisca se aumentando il numero dei campioni bootstrap rispetto a quello impiegato al punto 2 si ottengono risultati diversi
+
+Rieseguo con un numero maggiore di replicazioni, portandole a 2000.
+```{r}
+n <- length(x)
+B <- 2000
+meanboot1 <- rep(0,B)
+
+for (i in 1:B){
+  ind <- sample(1:n, n, replace = T)
+  vb <- x[ind]
+  mu <- mean(vb)    #creo lo stimatore di ogni vettore replicato
+  meanboot1[i] <- mu   #creo il vettore degli stimatori
+}
+
+```
+
+L'oggetto meanboot contiene le nuove replicazioni, riassunte attraverso il summary.
+```{r}
+summary(meanboot1)
+mean(meanboot1)
+sd(meanboot1)
+```
+
+*Una rapida occhiata al campione delle 2000 replicazioni bootstrap: la media delle replicazioni pari a 42.16, rispetto alle 200 replicazioni, è ancora più vicina al valore osservato nel campione originale (42.19). Il campo di variazione si è leggermente esteso e ora va da 39.8 a 44.4. La sd è rimasta invariata.*
+
+Procedo a creare un istogramma delle nuove replicazioni boostrap ottenute.
+Inoltre calcolo i limiti di confidenza al 95% per la distribuzione ottenuta, tramite il metodo del percentile.
+```{r}
+hist(meanboot1, col="black", freq=F, breaks = 200,
+     main="Istogramma bootstrap B:2000",
+     xlim=c(39,45),
+     xlab="Realizzazioni bootstrap del valore dello stimatore media")
+abline(v=c(mean(meanboot1),mean(x)), col=c("blue","lightblue"), lwd=c(4,2))
+
+qq1 <- quantile(meanboot1, c(0.025,0.975))
+abline(v=c(qq1[1],qq1[2]), col=c("orange","orange"), lwd=c(2,2))
+
+legend(43, 0.6, c("Media osservata", "Media boot", "IC 95%"),
+        lty=c(1,1), col=c("lightblue","blue", "orange"), bg="white",
+        cex=0.8)
+```
+
+*Osservando l'istogramma bootstrap, notiamo che la media delle replicazioni boot e la media osservata nel campione originario sono quasi coincidenti, come già indicato in precedenza.*
+*Rispetto al ricampionamento a 200 replicazioni, la distribuzione è ancor più simmetrica e sovrapponibile con una normale, ma questo è dovuto all'aumento considerevole della numerosità.*
+
+Confronto i limiti dell'intervallo di confidenza per vedere le differenze in termini di stima intervallare.
+```{r}
+qq[]
+qq1[]
+```
+*I limiti sono equivalenti. In sostanza l'aver aumentato sensibilmente il numero di replicazioni da 200 a 2000 volte, non influisce sui risultati di stima per la media aritmetica. Bastano quindi 200 replicazioni.*
+
+
+###13.5
+Si ripeta la procedura impiegata al punto precedente utilizzando la funzione bootstrap e si descrivano i risultati.
+
+Richiamo il pacchetto bootstrap, per rieseguire il campionamento tramite function.
+```{r}
+require(bootstrap)
+
+#Dato che sto analizzando la media aritmetica, essa è gia una funzione implementata nel pacchetto bootstrap.
+
+# Se non lo fosse la dovrei creare 
+#  thetaR <- function(ind){
+#            vfb <- x[ind]
+#            mean(vfb)
+# }
+
+#Applico la funzione boot per ottenere il vettore con le 2000 repliche.
+B <- 2000
+meanfboot <- bootstrap(x, B, mean)
+ 
+summary(meanfboot$thetastar)
+
+ 
+#media e quantili delle repliche ottenute con la funzione boot
+meanf <- mean(meanfboot$thetastar)
+qqf <- quantile(meanfboot$thetastar,c(0.025, 0.975))
+qqf
+```
+
+*La funzione bootstrap mi produce un vettore di stime della media aritmetica che ha come valore medio 42.28.*
+
+###13.6 
+Si riportino gli estremi dell'intervallo di confidenza calcolati con il metodo Bias Corrected Acellerated Bootstrap e si confrontino con gli estremi dell'intervallo di confidenza ottenuti con il metodo del percentile.
+
+```{r}
+BCAlim <- bcanon(x, B, mean, alpha = c(0.025, 0.975))
+BCAlim$confpoints   
+qqf[]
+```
+*Rispetto ai limiti dell'IC ottenuto col metodo del percentile applicato al vettore delle replicazioni ottenuto tramite la funzione implementata nel pacchetto bootstrap, i limiti BCa sono leggermente più stretti.*
+*Questo è dovuto alla correzione in termini di distorsione dovuta all'asimmetria, implementata nel metodo BCa.*
+
+Nel seguente istogramma, si possono confrontare graficamente i limiti calcolati con i due metodi.
+```{r}
+hist(meanfboot$thetastar, col="pink", freq=F, breaks = 100,
+     main="Istogramma delle replicazioni bootstrap",
+     xlim=c(40,45),
+     xlab="Replicazioni bootstrap")
+abline(v=c(qqf[1],qqf[2],BCAlim$confpoints[3],BCAlim$confpoints[4]), col=c("blue","blue","green","green"), lwd=c(2,2,2,2))
+
+legend(43.5, 0.6, c("IC - percentile", "IC - BCa"),
+        lty=c(1,1), col=c("blue","green"), bg="white",
+        cex=0.8)
+```
+*I limiti di confidenza calcolati con i due metodi sono praticamente identici. Le costanti infatti sono molto basse.*
+
+###13.7 
+Si riporti e si commentino i valori ottenuti al punto precedente delle costanti per la correzione della distorsione e di accelerazione.
+
+```{r}
+BCAlim$z0
+BCAlim$acc
+```
+*Le costanti di dispersione e accelerazione, rispettivamente, sono z0:0.04 e a: -0.01. Essendo valori molto piccoli, indicano che c'è una minima correzione ma essa è impercettibile, infatti l'intervallo non si discosta molto da quello trovato col metodo del percentile.*
+
+#Esercizio 14
+###14.1
+Si considerino i dati simulati durante la lezione 13 relativi ad uno studio prospettico in cui il campionamento avviene in base a coloro che hanno la pressione sistolica bassa e alta.
+```{r}
+  dataR <- data.frame(
+  X = rep(c("Alta-p1","Bassa-p0"), c(3338,2676)),   #righe
+  Y = rep(c(T,F, T,F), c(55,3338-55,21,2676-21))    #colonne
+)
+table(dataR)
+```
+
+###14.2
+Si intende considerare lo stimatore della differenza delle probabilità D = p1 - p0 per verificare se c'è indipendenza tra il livello della pressione e la presenza di una malattia cardiovascolare. (Si indica con 1 l'evento presenza di malattia (Y), e l'evento pressione alta (X), pertanto p0 = P(Y = 1|X = 0) mentre p1 = P(Y = 1|X = 1)). Si determini la stima di massima verosimiglianza per i dati simulati.
+```{r}
+CC <- prop.table(table(dataR),1); CC
+DD <- CC[3]-CC[4]; DD
+```
+*Le smv per le probabilità di rischio sono p1=0.016 e p0=0.008, perciò al stima puntuale della differenza è data dalla differenza di p1-p0 e risulta pari a circa 0.009*
+
+###14.3 
+Si utilizzi il boostrap per ricavare lo scarto quadratico medio per la stima di cui al punto precedente.
+```{r}
+B <- 1000
+DDB <- rep(0,B)
+n <- dim(dataR)[1]
+for(i in 1:B){
+  ind <- sample(1:n,size = n,replace = T)
+  datB <- dataR[ind,]
+  CC <- prop.table(table(datB),1)
+  DD <- CC[3]-CC[4] #differenza relativa
+  DDB[i] <- DD
+}
+
+Tm <- mean(DDB)
+summary(DDB)
+sd(DDB)
+```
+*Lo scarto è molto piccolo (0.003) e rappresenta la variabilità della distribuzione bootstrap dovuta al campionamento casuale (spread)*
+
+###14.4 
+Si fornisca l'intervallo di confidenza bootstrap più appropriato e si commenti il risultato.
+Limiti calcolati col metodo del percentile.
+```{r}
+qqstar <- quantile(DDB,c(0.025, 0.975))
+hist(DDB, main="Distribuzione bootstrap dati pressione",
+    breaks = 200, xlim=c(0,0.02),
+      col="lightblue", freq=F,
+      ylab="Densità",
+      xlab="Realizzazioni bootstrap per la differenza relativa")
+ 
+abline(v=c(DD,Tm,qqstar[1],qqstar[2]),
+        col=c("red","blue", "green","green"),
+        lty=c(3,3,3,3),
+        lwd=c(2,2,2,2))
+```
+
+Limiti calcolati col metodo BCa.
+```{r}
+thetaR <- function(ind){
+datB <- dataR[ind,]
+CC <- prop.table(table(datB),1)
+CC[3]-CC[4]
+}
+B <- 2000
+CIBCa <- bcanon(1:n,B,thetaR, alpha=c(0.025,0.975))
+limb <- CIBCa$confpoints; limb
+qqstar[]
+```
+*I limiti di confidenza calcolati con i due metodi sono praticamente identici.*
+
+```{r}
+hist(DDB, main="Distribuzione bootstrap dati pressione",
+    breaks = 200, xlim=c(0,0.02),
+      col="lightblue", freq=F,
+      ylab="Densità",
+      xlab="Realizzazioni bootstrap per la differenza relativa")
+ 
+abline(v=c(DD,Tm, limb[1,2],limb[2,2]),
+        col=c("red","blue","orange","orange"),
+        lty=3,        lwd=2)
+```
+
+#Esercizio 15
+
+Si considerino i dati seguenti che riguardano il numero di incidenti aerei avvenuti dal 1983 al 2006 in un certo territorio: 23, 16, 21, 24, 34, 28, 28, 28 , 24, 30, 28 , 24, 26 18, 23, 23, 36, 37 49, 50, 51, 56, 46, 41, 54, 30, 40,31. Si svolgano i punti in elenco commentando in ogni punto i risultati ottenuti.
+
+###15.1
+Si riportino gli indici di statistica descrittiva, deviazione standard e le analisi grafiche e si commenti.
+```{r}
+x <- c(23, 16, 21, 24, 34, 28, 28, 28 , 24, 30, 28 , 24, 26, 18, 23, 23, 36, 37,49, 50, 51, 56, 46, 41, 54, 30, 40,31)
+
+n <- length(x)
+media <- mean(x); media
+mediana <- median(x); mediana
+sd(x)
+c(media,sd(x)/sqrt(n))
+
+
+```
+*Media e mediana non sono molto vicine. La deviazione standard è di circa 11, quindi abbastanza elevata.*
+*La Distribuzione campionaria della media ha parametri media=media osservata=32.8 e deviazione standard=2.16.*
+
+```{r}
+plot(x, main="Grafico a dispersione per il numero incidenti")
+abline(h=mean(x), col ="red")
+abline(h=median(x), col ="green")
+legend(5, 45,
+c("media","mediana"),
+col=c("red","green"),
+lty=c(1,1))
+```
+*I dati sono distribuiti nella prima parte tendenzialmente sotto la media, e nella seconda sopra. Inoltre nella prima parte sono più compatti tra loro mentre nella seconda si disperdono maggiormente.*
+
+
+###15.2 
+Si applichi la funzione bootstrap per generare 3000 realizzazioni bootstrap per la media a la mediana e si riporti l'errore standard di entrambi gli stimatori ottenuto con il metodo bootstrap (si fissi set.seed=192).
+```{r}
+set.seed(192)
+B <- 3000
+
+bt1 <- bootstrap(x,B,mean)
+bt2 <- bootstrap(x,B,median)
+Bm1 <- bt1$thetastar
+Bm2 <- bt2$thetastar
+
+summary(Bm1)
+summary(Bm2)
+sd(Bm1)
+sd(Bm2)
+
+
+```
+
+###15.3 
+Si disegni l'istogramma, si riporti la distorsione dello stimatore, si riporti l'errore standard;
+La distorsione è il valore atteso della differenza tra lo stimatore e il vero valore di theta.
+L'errore std è la stima della deviazione standard (sd) dello stimatore, quindi è sd/sqrt(n).
+```{r}
+par(mfrow = c(1,2))
+hist(bt1$thetastar, breaks = 1000, main = 'Replicazioni Boot per la media')
+hist(bt2$thetastar, breaks = 1000, main = 'Replicazioni Boot per la mediana')
+```
+*Per la mediana il metodo bootstrap non è adeguato, perchè i valori ottenuti ricampionando non differiscono molto tra loro.*
+
+```{r}
+#errore standard
+sd(Bm1)
+sd(Bm2)
+
+#distorsione
+mean(bt1$thetastar-media)
+mean(bt2$thetastar -mediana)
+```
+
+###15.4
+Si riportino gli intervalli di confidenza bootstrap ottenuti con il metodo del percentile fissando un livello di copertura pari a 0.95.
+```{r}
+quantile(Bm1, c(0.025,0.975))
+quantile(Bm2, c(0.025,0.975))
+```
+*L'intervallo per la mediana non è idoneo.*
+
+
+#Esercizio 16
+Si consideri il peso di 3 topi ottenuti in laboratorio pari a 80, 103 e 91 grammi, rispettivamente.
+
+###16.1
+Si riporti il peso medio;
+```{r}
+p <- c(80,103,91)
+mean(p)
+```
+
+###16.2 
+Si riporti il numero possibile di campioni bootrstrap
+```{r}
+n <- length(p)
+n^n
+```
+
+###16.3 
+Si elenchino tutti i possibili campioni bootstrap;
+Con una matrice stampo i risultati
+```{r}
+B=n^n
+Tboot=rep(0,B)
+
+bt=matrix(data=NA,nrow=B, ncol=n) #contiene tutti i campioni
+
+for(i in 1:B){
+  Xstar <- sample(p,n,replace=T)
+  Tboot[i] <- mean(Xstar)
+  cat(c("campione",i,":",Xstar, "\n"))
+  for(j in 1:n){bt[i,j]=Xstar[j]}
+}
+```
+
+###16.4 
+Si riportino le medie ottenute per ognuno dei campioni bootstrap.
+```{r}
+apply(bt,1,mean)
+```
+
+###16.5 
+Si riporti la media delle medie ottenute dai campioni bootstrap e si confrontino con il peso medio del campione di origine
+```{r}
+mean(p)
+mean(Tboot)
+```
+*Rispetto alla media osservata, la media bootstrap è inferiore*
+
+###16.6 
+Si determinino i valori minimi e massimi di ogni campione bootstrap.
+```{r}
+apply(bt,1,min)
+apply(bt,1,max)
+```
+
+###16.7 
+Si riportino gli intervalli di confidenza ottenuti con il metodo del percentile e con il metodo BCa utilizzando il numero massimo dei campioni possibili.
+```{r}
+quantile(Tboot,c(0.025,0.975))
+
+B <- 27
+CIBca <- bcanon(p,B,mean,alpha = c(0.025,0.975))
+```
+*Il BCa non funziona perchè il numero di campioni possibile non è abbastanza alto*
+
+#Esercizio 17
+Il contenuto proteico del grano e del camut sono stati rilevati per diversi tipologie di prodotto. Si considerino i seguenti valori in grammi: Grano 176,125,152,180,159,168,160,151; Camut 164, 121, 137, 169, 144,145, 156,139.
+```{r}
+grano <- c(176,125,152,180,159,168,160,151)
+camut <- c(164, 121, 137, 169, 144,145, 156,139)
+dat <- data.frame(grano,camut)
+```
+
+
+###17.1
+Si illustrino i dati utilizzando le statistiche descrittive e le rappresentazioni grafiche e si calcolino le mediane riportando i valori.
+```{r}
+summary(dat)
+sd(dat$grano)
+sd(dat$camut)
+```
+
+```{r}
+par(mfrow=c(1,2))
+plot(grano, main="Valori in g di grano")
+abline(h=c(mean(dat$grano), median(dat$grano)), col=c("red","green"))
+plot(camut, main="Valori in g di camut")
+abline(h=c(mean(dat$camut), median(dat$camut)), col=c("red","green"))
+```
+
+```{r}
+boxplot(dat, ylab="g", main="Boxplot")
+```
+
+###17.2 
+Si applichi il metodo bootstrap per ottenere la distribuzione dell'errore di stima quando si è interessati alla differenza tra le medie aritmetiche delle due popolazioni. Si commenti il risultato. Si disegni se possibile la distribuzione Monte Carlo dello stimatore d'interesse e dell'errore di stima e si commenti.
+```{r}
+require(bootstrap)
+B <- 2000
+n <- dim(dat)[1]
+theta <- function(ind){
+  Y <- dat[ind,"grano"]
+  Z <- dat[ind,"camut"]
+  mean(Y)-mean(Z)
+}
+
+Boot1 <- bootstrap(1:n,B,theta)
+summary(Boot1$thetastar)
+```
+
+```{r}
+Doss <- mean(dat$grano) - mean(dat$camut)
+Tm <- mean(Boot1$thetastar)
+hist(Boot1$thetastar,
+main = "Dist. Boot. diff",
+breaks=300,
+freq=FALSE,
+ylab="Densità", xlab="Real. boot. per la differenza tra le medie")
+abline(v=c(Doss, Tm), col=c("red","blue"), lwd=c(3,3))
+legend(15, 0.7, c("difOR","difB"), col=c("red","blue"),
+lty=c(1,1), cex=1, bty = "n")
+```
+
+Calcolo errore di stima
+```{r}
+ERR <- Boot1$thetastar-Doss
+hist(ERR,
+main = "Dist. Boot. errore di stima",
+breaks=300,
+freq=FALSE,
+ylab="Densità",
+xlab="Errore di stima")
+```
+
+
+###17.3 
+Si applichi il metodo bootstrap come al punto (2) considerando la differenza tra le due mediane. Si commenti il risultato.
+```{r}
+require(bootstrap)
+B <- 2000
+n <- dim(dat)[1]
+theta1 <- function(ind){
+  Y <- dat[ind,"grano"]
+  Z <- dat[ind,"camut"]
+  median(Y)-median(Z)
+}
+
+Boot2 <- bootstrap(1:n,B,theta1)
+summary(Boot2$thetastar)
+```
+
+```{r}
+Doss1 <- median(dat$grano)-median(dat$camut); Doss1
+Tm1 <- mean(Boot2$thetastar);Tm1
+ERR1 <- Boot2$thetastar-Doss1
+```
+
+```{r}
+par(mfrow=c(1,2))
+
+hist(Boot2$thetastar,
+main = "Dist. Boot. differenza mediane",
+breaks = 300,
+freq = FALSE,
+ylab="Densità",
+xlab="Real. boot differenza delle mediane")
+abline(v=c(Doss1, Tm1), col=c("red","blue"), lwd=c(3,3))
+legend(5, 4,
+c("difOR","difB"),
+col=c("red","blue"),
+lty=c(1,1), cex=1, bty = "n")
+
+
+hist(ERR1,
+main = "Dist. Boot. dell'errore di stima ",
+breaks=300,
+freq=FALSE,
+ylab="Densità",
+xlab="Errore di stima diff. mediane")
+```
+
+
+###17.4 
+Si ottenga un intervallo di confidenza applicando il metodo del percentile sia per lo stimatore della differenza tra le medie che della differenza tra le mediane.
+```{r}
+alpha <- 0.05
+qqmedia <- quantile(Boot1$thetastar, c(alpha/2,1-alpha/2));qqmedia
+qqmediana <- quantile(Boot2$thetastar, c(alpha/2,1-alpha/2));qqmediana
+```
+
+#Esercizio 18
+Si considerino le seguenti frequenze assolute riferite all'esempio dello stimatore del rischio relativo (cf. Pennoni_Dispense_Parte_Applicazioni_R.pdf, lezione 13) in cui si dispone di dati raccolti in uno studio dove un gruppo con una caratteristica d'interesse è stato confrontato con un gruppo di controllo in un periodo di tempo specifico rispetto a tre diverse locazioni (a), (b) e (c):
+(a) N11 = 138,N1. = 3786, N01 = 167,N0. = 3411,
+(b) N11 = 186,N1. = 5775, N01 = 250,N0. = 5445,
+(c) N11 = 123,N1. = 1446, N01 = 117,N0. = 14294
+
+###18.1 
+Si svolgano i punti come nell'esempio della lezione 13 e si riportino i commenti al codice per ognuna delle tre locazioni (a), (b) e (c) separatamente (si utilizzi B>2000)
+
+###c
+```{r}
+
+#(c)
+dataRc <- data.frame(X=rep(c("bassaP0","altaP1"),
+                          c(14294,1446)),
+                    Y=rep(c(F,T,T,F),
+                          c(14294-117,117,1446-123,123)))
+
+table(dataRc)
+```
+```{r}
+CCc <- prop.table(table(dataRc),1); CCc
+```
+ 
+```{r}
+RRc <- CCc[3]/CCc[4]; RRc
+```
+
+```{r}
+B <- 2000
+RRBc <- rep(0,B)
+n <- dim(dataRc)[1]  #il campione originario è composto da 6014 valori
+#n è il totale della prima colonna del df che contiene il totale di esposti+non esposti
+set.seed(1023)
+for(i in 1:B){
+ind <-sample(1:n, size = n, replace = TRUE)
+datB <- dataRc[ind,]
+CCB <- prop.table(table(datB),1)
+RR <- CCB[3]/CCB[4]
+RRBc[i]<-RR
+}
+
+summary(RRBc)
+sd(RRBc)
+```
+
+###18.2
+Si confrontino le rispettive distribuzioni bootstrap e si commenti se sussistono delle differenze.
+
+
+#Esercizio 19
+Si consideri l'esempio circa l'utilizzo dell'algortimo EM per imputare i valori mancanti della tabella di contingenza (2 x 3), supponendo le seguenti osservazioni per le frequenze assolute y11 = 16, y12 = 7, y13 = 7, y21 = NA, y22 = 64, y23 = 5.
+
+###19.1 
+Si implementino le funzioni che consentono di stimare i parametri del modello linerare per yij utilizzando l'algortimo EM.
+```{r}
+fa <- c(16,7,7,NA,64,5)
+y <- matrix(fa, nrow = 2,ncol = 3,byrow = T)
+#y <- matrix(c(10,15, 17, 22, 23, NA),2,3,byrow=TRUE)
+y
+```
+
+```{r}
+em1 <- function(y21, y){
+ystar <- y
+ystar[2,1] <- y21
+mu.hat <- mean(ystar)
+alpha.hat <- apply(ystar, MAR = 1, mean) - mean(ystar)
+beta.hat <- apply(ystar, MAR = 2, mean) - mean(ystar)
+y21 <- mu.hat + alpha.hat[2] + beta.hat[1]
+return(c(mu = mu.hat, alpha = alpha.hat, beta = beta.hat,y21 = y21))
+}
+```
+
+```{r}
+mean(y, na.rm = TRUE)
+em1(19.8,y)
+```
+
+
+###19.2
+Si descriva il processo iterativo attraverso il grafico delle stime dei parametri e si riportino i valori stimati ed la stima del valore mancante;
+```{r}
+set.seed(183)
+em.step <- function(y, epsilon= 1e-8){
+trace <- NULL
+convergenza <- FALSE
+trace <- t(em1(y21= mean(y, na.rm = TRUE), y = y ))
+y21id <- grep("y21", colnames(trace))
+i <- 0
+while(!convergenza){
+i <- i + 1
+29
+trace <- rbind(trace, em1(y21 = trace[i, "y21"], y = y))
+convergenza <- (dist(trace[i:(i+1), -y21id]) < epsilon)
+}
+return(trace)
+}
+tail(em.step(y))
+```
+
+```{r}
+ris<- em.step(y)
+names1 <- expression(mu, alpha[1], alpha[2], beta[1], beta[2], beta[3])
+pal1<- c("red", "yellow", "green", "violet", "blue", "orange")
+
+matplot(ris[,-7],
+type = "l",
+col = pal1,
+lwd = 2,
+lty = 1,
+xlab = "Iterazioni dell'algoritmo EM",
+ylab = "Stime dei parametri del modello")
+legend(x = 0,
+y = -5,
+legend = names1,
+lwd = 2 ,
+col = pal1,
+lty = 1,
+horiz=TRUE,
+cex=0.7)
+```
+*Le stime sembrano convergere già intorno alle 20 interazioni. Perciò ne bastano molte meno, quindi modifico il parametro di input e lo rendo più grande, per avere meno iterazioni.*
+
+
+###19.3
+Si modifichi il parametro di input della funzione in modo da interrompere l'algoritmo avendo meno di 20 iterazioni. Si giustifichi il risultato rispetto alle nuove stime dei parametri.
+Proviamo con epsilon di 
+```{r}
+em.step(y, epsilon= 1e-2)
+```
+
+```{r}
+ris <- em.step(y, epsilon= 1e-2)
+names1 <- expression(mu, alpha[1], alpha[2], beta[1], beta[2], beta[3])
+pal1<- c("red", "yellow", "green", "violet", "blue", "orange")
+matplot(ris[,-7],
+type = "l",
+col = pal1,
+lwd = 2,
+lty = 1,
+xlab = "Iterazioni dell'algoritmo EM",
+ylab = "Stime dei parametri del modello")
+legend(x = 1,
+y = -3,
+legend = names1,
+lwd = 2 ,
+col = pal1,
+lty = 1,
+horiz=TRUE,
+cex=0.5)
+```
+
+
+#Esercizio 20
+Si utilizzi la funzione funcmxn introdotta per la simulazione dei valori della densità della funzione miscuglio per i seguenti punti:
+
+```{r}
+funcmxn <- function(x,p,mu,sd){
+  f1 <- dnorm(x,mu[1],sd[1])
+  f2 <- dnorm(x,mu[2],sd[2])
+  fmis <- p*f1+(1-p)*f2
+  fmis
+}
+```
+
+###20.1 
+Si rappresenti graficamente la funzione di densità del modello miscuglio quando il valore assegnato al peso della prima compomente è p = 0.32, la funzione di densita' della prima compomente è N(1, 1.3) e della seconda componente e' N(0, 1.3)
+
+```{r}
+y <- seq(-5,10,0.01);
+n <- length(y)
+
+mu1 <- c(1,0)
+sd1 <- c(sqrt(1.3),sqrt(1.3))
+p1 <- 0.32
+
+pr1 <- funcmxn(x = y, p = p1, mu = mu1, sd = sd1)
+plot(y, pr1, xlab = "y", ylab="Density",
+col="lightsteelblue1", type = "l",
+main="Densità miscuglio di N(1,1.3) e N(0,1.3) con peso 0.32")
+```
+
+
+###20.2 
+Si confronti il grafico precedente con la funzione di densità derivante della convoluzione delle due variabili casuali normali con parametri uguali al punto precedente e si commenti il risultato.
+
+```{r}
+rep<- replicate(5000, sum(rnorm(n=2, 1, sqrt(1.3))))
+
+hist(rep, freq=FALSE, breaks=300, ylim=c(0,0.4),
+     col="yellow3", main="Istogramma convoluzione di 2 N(1,1.3)")
+```
+
+In alternativa
+```{r}
+N1 <- rnorm(5000, 1, sqrt(1.3))
+N2 <- rnorm(5000, 1, sqrt(1.3))
+NN <- cbind(N1,N2)
+SN <-apply(NN, MARGIN=1, FUN = sum)
+hist(SN, main = "Frequenze",xlim=c(-6,8),
+xlab="Realizzazioni da una convoluzione di N(1,1.3) e N(1,1.3) ",
+breaks=200, freq=FALSE)
+```
+
+
+#Esercizio 21
+Si considerino i dati presenti nel dataset denominato betacar.Rdata che riguardano un campione casuale di individui maschi in uno studio volto a valutare il ruolo del beta-carotene.
+Considerando l'esempio circa il livello di colesterolo (cf. Pennoni_Dispense_Parte_Applicazioni_R.pdf, lezione 19) si svolgano i seguenti punti:
+###21.1
+Si descrivano i dati (dietab: plasma beta-carotene in ng/ml)
+```{r}
+load("betacar.Rdata")
+require('mclust')
+d <- betacar$dietab
+length(d)
+summary(d)
+```
+
+```{r}
+inf <- mclustBIC(d)
+inf
+```
+
+```{r}
+plot(inf)
+```
+*Il modello con BIC minore in valore assoluto è quello a tre componenti e con varianze diverse.*
+
+###21.2 
+Si riportino e si commentino le caratteristiche più interessanti delle stime ottenute per il modello miscuglio.
+```{r}
+mod1 <- Mclust(d, G=3, modelNames = "V")
+summary(mod1, parameters = T)
+```
+*Le 273 unità sembrano dividersi in 3 gruppi omogenei tra loro...*
+```{r}
+plot(mod1, what='density',betacar$dietab)
+```
+
+```{r}
+plot(mod1, what='classification')
+```
+
+#Esercizio 22
+Si consideri la seguente funzione inversa generalizzata
+F-1 X (U) =???sqrt(-2sigma2Xlog(U)
+
+###22.1
+Si utilizzi il metodo della trasformata inversa per generare 1000 realizzazioni sia quando theta = 0.5 e sia quando theta = 5
+
+```{r}
+si1 <- 0.5
+ray1<-function(x){
+sqrt(-2*si1^2*log(x))
+}
+u1 <- runif(1000)
+xray1 <- ray1(u1)
+
+si2 <- 5
+ray2<-function(x){
+sqrt(-2*si2^2*log(x))
+}
+u2 <- runif(1000)
+xray2 <- ray2(u2)
+```
+
+###22.2 
+Si illustrino i dati generati attraveso le statistiche descrittive e si commenti.
+```{r}
+summary(xray1)
+sd(xray1)
+summary(xray2)
+sd(xray2)
+```
+
+###22.3 
+Si riportino e si commentino gli istogrammi dei valori generati.
+```{r}
+par(mfrow=c(1,2))
+hist(xray1, freq = F, breaks = 200, main="Istogramma theta=0.5", xlim=c(0,2.5))
+hist(xray2, freq = F, breaks = 200, main="Istogramma theta=5", xlim=c(0,2.5))
+```
+
+
+#Esercizio 23
+Si considerino le realizzazioni presenti nel file xray.Rdata.
+
+###23.1 
+Si riportino e si commentino le statistiche descrittive dei dati
+
+###23.2 
+Si eseguano i test grafici per valutare la pseudo-casualità della serie e si riporti ogni grafico con il commento.
+
+###23.3 
+Si esegua il test statistico per verificare la pseudo-casualità che sfrutta le informazioni della funzione di ripartizione empirica dei dati e si commenti il risultato.
+
+###23.4 
+Si stabilisca in base ai punti 2 e 3 se è possibile considerare queste determinazioni come realizzazioni pseudo-casuali.
+
+#Esercizio 24
+Si consideri la distribuzione di Pareto.
+
+###24.1
+Si applichi il metodo della trasformata inversa per generare 1000 realizzazioni da questa distribuzione quando c = 2 e ?? = 2
+
+```{r}
+c <- 2
+th <- 2
+pareto <- function(x){
+  c/((1-x)^(1/th))
+}
+
+u <- runif(1000)
+par <- pareto(u)
+summary(par)
+```
+
+###24.2
+Si disegni la funzione di ripartizione empirica dei dati, inserendo una linea per il valore mediano
+```{r}
+plot(ecdf(par), do.point=F)
+abline(h=0.5, col="pink", lwd=3)
+```
+
+###24.3
+Si aggiunga al grafico precedente la funzione di ripartizione empirica quando c = 4.
+
+```{r}
+c <- 4
+th <- 2
+pareto <- function(x){
+  c/((1-x)^(1/th))
+}
+par2 <- pareto(u)
+
+plot(ecdf(par), do.point=F, main="Funzione di ripartizione empirica",
+     xlab="Realizzazioni")
+plot(ecdf(par2), do.point=F, add=T, col="orange")
+abline(h=0.5, col="pink", lwd=3)
+legend(40,0.8, c("PAreto c=2 th=2", "Pareto c=4 th=2","Mediana"),
+       col=c("black","orange","pink"), lty=1, cex = 0.8)
+```
+
+#Esercizio 25
+Si considerino i dati presenti nel file denominato hdat.R che riguardano le misure riscontrate circa la lunghezza in millimetri delle lesioni al muscolo del cuore provocate dalla rimozione chirurgica di un catetere di alcuni
+pazienti in cura presso un certo ospedale.
+```{r}
+load("hdat.Rdata")
+```
+
+###25.2
+Si consideri il seguente indice:
+min[(media ??? 4)/(3 ??? s.d.),(10 ??? media)/(3 ??? s.d.)]
+dove media e' la media aritmetica campionaria e s.d. e' la deviazione standard campionaria. Si calcoli il valore dell'indice per i dati (Si riportino entrambe le quantita' e poi si calcoli il minimo valore)
+```{r}
+mediax <- mean(hdat); mediax
+sdx <- sd(hdat);sdx
+indice <- min((mediax ??? 4)/(3 ??? sdx),(10 ??? mediax)/(3 ??? sdx)); indice
+```
+
+###25.3
+Si crei una funzione che possa essere utilizzata per applicare la funzione bootstrap::bootstrap per ottenere un intervallo di confidenza ottenuto con il metodo del percentile per questo indice (si inserisca return(min()) come output della funzione).
+```{r}
+#require(bootstrap)
+thetaR <- function(ind){
+  x <- hdat[ind]
+  m <- mean(x)
+  s <- sd(x)
+  return (min((m ??? 4)/(3 ??? s),(10 ??? m)/(3 ??? s)))
+}
+```
+
+###25.4
+Si applichi la funzione implementata al punto precedente e si ottenga la stima bootstrap dell'errore standard e si commenti.
+
+```{r}
+B <- 1000
+n <- length(hdat)
+IB <- bootstrap(1:n,B,thetaR )
+
+summary(IB$thetastar)
+sd(IB$thetastar)
+```
+
+###25.5
+```{r}
+hist(IB$thetastar, breaks = 200,freq = F, main="Valori bootstrap dell'indice min", xlim=c(0.5,1.8))
+```
+

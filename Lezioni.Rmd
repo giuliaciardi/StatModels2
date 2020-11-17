@@ -1,0 +1,1273 @@
+---
+title: "Lezioni"
+output:
+  word_document: default
+  pdf_document: default
+---
+LEGENDA: In *corsivo* sono i commenti ai risultati.
+
+Lista dei colori in R http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+
+**INDICE**
+Lezione 2: Generare numeri pseudo-casuali
+Lezione 3: Verifica della pseudo-casualità o Test di casualità: plot, hist, ecdf
+Lezione 4: Altri test di casualità: KS, qq, acf
+Lezione 6: Metodo della trasformata inversa: exp
+Lezione 7: Generare da una binomiale e da una normale
+Lezione 9: Generare da una Gamma - Convoluzione di vc
+Lezione 11: Bootstrap: dati patch, funzione bioequivalenza: function
+Lezione 12: Bootstrap per l'indice di asimmetria: ciclo for
+Lezione 13: bootstrap per lo stimatore della popolazione di equilibrio: regr lineare, BCa
+Lezione 14: bootstrap per lo stimatore del rischio relativo: tab di contingenza
+Lezione 16: applicazione dell'algortimo Expectation-Maximization
+Lezione 18: Densità miscuglio con pesi noti: gaussiane
+Lezione 19: applicazione dei modelli miscuglio per i valori del colesterolo: numero delle componenti
+
+
+#Lezione 2: Generare numeri pseudo-casuali
+##Il metodo congruenziale moltiplicativo
+Il metodo congruenziale moltiplicativo produce una sequenza di numeri pseudo-casuali che sono simili a quelli di variabili casuali indipendenti uniformi nell'intervallo (0,1).
+
+```{r}
+#detto le variabili di input
+a<-171    #moltiplicatore
+m<-3026932  #modulo
+x0<-271  #seme iniziale
+n<-1000   #lunghezza serie generata
+
+random.r <- numeric(n)
+
+#ci serve un ciclo for perchè vogliamo dire per quanto deve girare l'algoritmo
+for(j in 1:n){
+  x0 <- (a*x0)%%m
+  x0/m
+  #posiziona nel j elemento del vettore il numero casuale che risulta da x0/m
+  random.r[j] <- x0/m
+}
+random.r[1:10]
+
+```
+
+Cercare M tale che i numeri generati si ripetano.
+```{r}
+a<-171
+m<-50
+x0<-271
+n<-1000
+for(j in 1:n){
+  x0 <- (a*x0)%%m
+  x0/m
+  random.r[j] <- x0/m
+}
+
+random.r[1:10]
+
+table(random.r)
+```
+*I numeri si ripetono dopo soltanto 5 valori. Scegliere un valore di M piccolo porta a questo inconveniente.*
+
+##Generazione tramite funzione runif
+
+```{r}
+set.seed(403)
+
+#genero 2 vettori contenenti gli stessi elementi, disordinati e non
+u <- runif(1000)
+us <- sort(u)
+```
+
+#Lezione 3: Verifica della pseudo-casualità o Test di casualità
+Una valutazione empirica dell'equiprobabilità ed indipendenza dei numeri pseudo-casuali generati può essere fatta attraverso alcune rappresentazioni grafiche.
+
+Occorre valutare se i numeri generati hanno una distribuzione uniforme e le estrazioni sembrano stocasticamente indipendenti.
+
+##Plot della distribuzione dei numeri pseudo-casuali sul piano (0,n)x(0,1)
+```{r}
+x <- runif(100)
+plot(x, main="Scatter plot", 
+     col="green")
+
+```
+*La concentrazione dei punti risulta abbastanza sparsa e non si evidenzia alcuna struttura di dipendenza.*
+
+##Istogramma
+Quando n è elevato, per verificare l'uniformità dei numeri generati è meglio disegnare l'istogramma della distribuzione di densità frequenza. In caso di uniformità e indipendenza mi aspetto un grafico che prende la forma di un quasi rettangolo, evidenziando equidistribuzione dei valori nell'intervallo (0,1).
+
+```{r}
+y <- runif(1000)
+hist(y, main="Istogramma",
+     freq = F, col="green")
+
+```
+*Dalla figura si evince che la distribuzione è simile a quella di un'uniforme nell'intervallo (0, 1).*
+
+##Funzione di ripartizione empirica
+La FdR empirica, essendo funzione dei soli dati campionari, funge da miglior stimatore della funzione di ripartizione incognita F nel punto x. Infatti è corretta, consistente, con MSE tendente a 0.
+
+L'ecdf è una funzione a scalini con salti pari a 1/n in corrispondenza dei valori campionari ordinati. Si calcola quando non si conosce la funzione di ripartizione della variabile casuale da cui sono stati generati i dati.
+
+```{r}
+y <- runif(1000)
+cdf <- ecdf(y)
+summary(cdf)
+
+plot(ecdf(y),do.points=F,
+     main="Funzione di ripartizione empirica",
+     col="blue")
+
+```
+
+Confronto tra ecdf dei dati generati e funzione di ripartizione di una variabile casuale uniforme in (0,1).
+
+```{r}
+plot(ecdf(y), do.points = F,
+     main="Funzione di ripartizione empirica")
+curve(punif(x), 0, 1, lty = "dashed", col = "red", add = T)
+
+```
+*Dal grafico si evince che le due funzioni sono quasi sovrapposte. Perciò i numeri generati sono verosimilmente realizzazioni di una vc uniforme in (0,1).*
+
+Voglio vedere i punti di salto.
+```{r}
+head(knots(cdf))
+tail(knots(cdf))
+```
+
+#Lezione 4: Altri test di casualità
+##Test di Kolmogorov-Smirnov
+Si tratta di un test analitico che permette di verificare l'ipotesi secondo cui una data serie di numeri pseudo-casuali generati in R proviene da una distribuzione nota.
+
+Ad esempio, voglio verificare che dei valori generati da una N(0,1) seguano effettivamente una distribuzione normale standard.
+
+```{r}
+set.seed(832)
+ran1<- rnorm(1000,0,1)
+
+plot(ecdf(ran1), do.points=FALSE,
+     main='FdR empirica')
+curve(pnorm(x,0,1), 
+      col='red',
+      add=TRUE)
+```
+*Il test grafico di confronto porta ad accettare l'ipotesi nulla.*
+
+```{r}
+ks.test(ran1, "pnorm", 0,1)
+```
+*Essendo il p-value quasi pari 0.5 allo zero, si accetta l'ipotesi nulla che i dati siano estratti da una normale standard.*
+
+```{r}
+ks.test(ran1, "punif")
+```
+*Al contrario, con un p value quasi pari a 0, si rifiuta l'ipotesi nulla secondo cui la serie sia generata da una uniforme in (0,1).*
+
+##Qualche grafico
+
+Istogrammi di due serie generate da due normali con parametri differenti.
+```{r}
+ran1 <- rnorm(1000,0,1)
+ran2 <- rnorm(1000,0,2)
+
+par(mfrow=c(1,2))
+hist(ran1,
+      col='goldenrod4', 
+      breaks = 14,
+       freq=FALSE,
+       ylim=c(0,0.5), 
+       main = 'Istogramma N(0,1)', 
+       xlab = "Numeri generati", 
+       ylab = "Densità di frequenza")  
+
+qq <- quantile(ran1)
+abline(v = qq[2], col = "blue", lwd =2, lty =2)
+
+hist(ran2,
+     col='goldenrod4', 
+     breaks = 14,
+     freq=FALSE,
+     ylim=c(0,0.5), 
+     main = 'Istogramma N(0,2)', 
+     xlab = "Numeri generati", 
+     ylab = "Densità di frequenza")  
+
+qq <- quantile(ran2)
+abline(v = qq[2], col = "blue", lwd =2, lty =2)
+
+```
+
+##Calcolo dei quantili
+```{r}
+quantile(ran1)
+```
+
+Disegno dei quantili di maggior interesse sulla distribuzione disegnata dall'istogramma.
+
+```{r}
+ran2 <- rnorm(1000, mean=0, sd=2)
+
+hist(ran2,
+     col="hotpink",
+     breaks = 15,
+     freq=F,
+     ylim= c(0, 0.3),
+     xlab="Numeri generati",
+     ylab="Densità di frequenza",
+     main="Istogramma N(0,2)")
+
+qq <- quantile(ran2)
+abline(v=c(qq[2],qq[3],qq[4]),
+       col="green",       lwd=2,       lty=2)
+
+```
+
+
+##Test di autocorrelazione
+Si tratta di un test basato sulla funzione di autocorrelazione empirica e serve per verificare l'indipendenza dei valori pseudo-casuali generati e la stazionarietà della serie. La funzione acf calcola la stima della funzione di autocorrelazione del processo e disegna il grafico.
+
+Il numero della distanze da considerare (lag) di default in R è 10*log10(N/m), con N=numero di osservazioni e m=numero di serie. Nella figura vengono visualizzati anche gli intervalli di confidenza approssimati al 95% calcolati rispetto ad una serie indipendente.
+
+```{r}
+ran1 <- rnorm(1000,0,1)
+par(mfrow=c(3,1))
+acf(ran1, main ="Funzione di autocorrelaione lag 30")
+
+#10*log10(1000/1) = 30 
+
+acf(ran1, main ="Funzione di autocorrelaione lag 10", lag.max = 10)
+acf(ran1, main ="Funzione di autocorrelaione lag 100", lag.max = 100)
+
+```
+
+*In tutti i casi considerati, la serie di numeri generati non mostra autocorrelazione. Perciò si può concludere che le osservazioni sono determinazioni che rispecchiano l'assunto teorico.*
+
+#Lezione 6: Metodo della trasformata inversa
+Il metodo della trasformata inversa si adatta molto bene per generare valori da distribuzioni di densità di variabili casuali continue. Il metodo è esatto e diretto. Si può applicare solo se si conosce la forma della funzione di densità, da cui si può ricavare la F e di conseguenza la sua inversa.
+
+
+##Variabile casuale esponenziale
+L'obiettivo è ottenere realizzazioni pseudo-casuali di una distribuzione continua nota, applicando la funzione inversa generalizzata a valori generati da una uniforme in (0,1). La distribuzione di cui si vuole generare una serie è un'esponenziale con lambda = 1.
+```{r}
+#Genero i valori di partenza da una uniforme
+x <- runif(1000)
+#applico la funzione inversa generalizzata di una esponenziale con parametro lambda = 1
+yy <- -log(x)
+summary(yy)
+
+```
+*Possiamo verificare che i numeri generati hanno una media simile al valore atteso della distribuzione, che è pari a 1/lambda = 1/1 = 1*
+
+Confronto la distribuzione osservata con la curva di densità teorica di una ESP(1).
+```{r}
+hist(yy, freq=F,
+     xlab="Valori simulati vs Valori teorici",ylab="Densità di frequenza",
+     xlim=c(0, 7),
+     main="Istogramma esponenziale di parametro lambda = 1",
+     col="tan2")
+curve(dexp(x,1),
+      col="green", lwd=3,
+      add=T)
+
+```
+
+##Confronto di Esponenziali di parametri lambda != 1.
+Si generano delle realizzazioni per lambda = 0.6, 1.3, 10. E' stato fissato il valore del seme per generare gli stessi numeri-pseudo casuali e poter eseguire un confronto.
+Quando il parametro è diverso da 1, la funzione inversa generalizzata è pari a [-log(x)/lambda].
+
+```{r}
+lambda0 <- 1
+lambda1 <- 0.6
+lambda2 <- 1.3
+lambda3 <- 10
+
+set.seed(736)   #imposto il seme
+#genero i vettori di partenza:
+o <- runif(1000)
+a <- runif(1000)
+b <- runif(1000)
+c <- runif(1000)
+#applico la funzione inversa
+aa <- (-log(a)/lambda1)
+bb <- (-log(b)/lambda2)
+cc <- (-log(c)/lambda3)
+oo <- -log(o)
+
+par(mfrow=c(2,2))
+
+hist(oo, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 10), xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 1",
+     col="royalblue")
+curve(dexp(x, lambda0),
+      col="green",
+      add=T)
+
+hist(aa, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 7),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 0.6",
+     col="royalblue")
+curve(dexp(x, lambda1),
+      col="green",
+      add=T)
+
+hist(bb, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 7),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 1.3",
+     col="royalblue")
+curve(dexp(x, lambda2),
+      col="green",
+      add=T)
+
+hist(cc, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 1),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 10",
+     col="royalblue")
+curve(dexp(x, lambda3),
+      col="green",
+      add=T)
+
+```
+
+Avremmo ottenuto la stessa cosa, generando i valori tramite la funzione rexp.
+```{r}
+serie0 <- rexp(1000)
+serie1 <- rexp(1000,0.6)
+serie2 <- rexp(1000,1.3)
+serie3 <- rexp(1000,10)
+
+par(mfrow=c(2,2))
+hist(serie0, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 10), xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 1",
+     col="navy")
+curve(dexp(x, lambda0),
+      col="green",
+      add=T)
+
+hist(serie1, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 7),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 0.6",
+     col="navy")
+curve(dexp(x, lambda1),
+      col="green",
+      add=T)
+
+hist(serie2, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 7),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 1.3",
+     col="navy")
+curve(dexp(x, lambda2),
+      col="green",
+      add=T)
+
+hist(serie3, freq=F,
+     ylab="Valori simulati",
+     xlim=c(0, 1),xlab="Valori Simulati vs Teorici",
+     main="Istogramma con lambda = 10",
+     col="navy")
+curve(dexp(x, lambda3),
+      col="green",
+      add=T)
+
+```
+
+
+#Lezione 7: Generare da una binomiale e da una normale
+##Variabile casuale binomiale
+
+Si affronta il problema di ricreare dei numeri pseudo-casuali da una distribuzione discreta.
+La probabilità (il valore della densità) di ottenere rispettivamente 0, 1 e 2 successi, in 2 prove (size), in cui la probabilità di successo si attesta a 0.3 (prob), è data dal seguente richiamo:
+```{r}
+size <- 2
+prob <- 0.3
+dbinom(0,size, prob)
+dbinom(1,size, prob)
+dbinom(2,size, prob)
+```
+
+La probabilità che il numero di successi in 2 lanci di una moneta truccata sia minore o uguale rispettivamente a 1 e 2, si ottiene nel seguente modo:
+```{r}
+pbinom(2,2,0.3)
+pbinom(1,2,0.3)
+
+```
+
+Generazione di 10 realizzazioni casuali da una binomiale con 2 prove e p nota.
+```{r}
+rbinom(10,2,0.3)
+```
+
+Frequenza assoluta e relativa di successi in 1000 prove, in cui la probabilità di successo è 0.3.
+```{r}
+rbinom(1,size = 1000,prob = 0.3)
+rbinom(1,size = 1000,prob = 0.3)/1000
+```
+*Per la legge dei grandi numeri, la media aritmetica di n realizzazioni indipendenti da una variabile aleatoria X, converge in probabilità al vero valore atteso della variabile aleatoria, per n che tende all'infinito. Avendo posto n = 1000, il nostro esempio rappresenta una verifica empirica per simulazione della legge dei grandi numeri. Il risultato empirico ottenuto si avvicina al vero valore (in questo caso 0.3).*
+
+
+##Variabile casuale normale
+Generare n realizzazioni da una normale standard. Verificare graficamente se il valore osservato di ripartizione in corrispondenza del valore centrale x=0 coincide con il valore teorico 0.5.
+```{r}
+set.seed(7364)
+serie <- rnorm(100)
+plot(ecdf(serie), do.points=F,lwd=2,   
+     main="Funzione di ripartizione empirica")
+
+pnorm(0)   #valore teorico : 0.5
+
+abline(h=0.5,       col="green",
+       lwd=2,       lty=2)
+
+```
+*Il valore osservato è molto vicino al valore teorico. In questo caso, quando la serie generata arriva da una distribuzione nota, il confronto delle realizzazioni casuali da questa variabile viene fatto rispetto a dei valori teorici di riferimento, in questo caso il valore della ripartizione calcolato nel punto centrale.*
+
+Cerchiamo quali sono e la frequenza dei valori generati compresi tra (-0.25,0.25).
+```{r}
+sort(serie[which(serie>-0.25 & serie <0.25)])
+
+length(which(serie>-0.25 & serie <0.25))/length(serie)
+```
+*Il 13% dei valori generati cade nell'intervallo (-0.25,0-25).*
+
+#Lezione 9: Generare da una Gamma - Convoluzione di vc
+
+Si utilizza la funzione replicate per disporre di realizzazioni dalla variabile casuale risultante dalla convoluzione di variabili casuali Sn = X1 + X2 +... Xn dove X1, X2, ... Xn sono variabili aleatorie indipendenti.
+
+Gamma è una vc di convoluzione, derivante dalla somma di esponenziali indipendenti e di parametro lambda. Essa ha 2 parametri: - alpha, parametro di posizione, >0, uguale a shape - beta, parametro di scala, >0, uguale a rate
+```{r}
+rep<- replicate(1000, sum(rexp(n=3, rate = 1)))
+
+hist(rep, freq=FALSE, breaks=30, ylim=c(0,0.4),
+     col="yellow3", main="Istogramma convoluzione di 3 exp")
+curve(dgamma(x, shape=3, rate=1), add=TRUE, lwd=3, col="green")
+#shape è il numero di vc convolute
+#rate è il parametro delle componenti
+
+```
+
+Calcolo della probabilità P(S3<= 5)
+```{r}
+sum(rep<=5)/length(rep)
+```
+
+Osservo la funzione di ripartizione.
+```{r}
+plot(ecdf(rep), do.points=F, col="violet", lwd=3,
+     main="Funzione di ripartizione empirica")
+
+```
+
+Osservo i principali indicatori della distribuzione.
+```{r}
+summary(rep)
+```
+*Media e mediana sono vicine, perciò la distribuzione è simmetrica. Il valore atteso della gamma teorica è alphaXbeta = 3;il valore osservato calcolato sulla serie generata è molto vicino al valore teorico.*
+
+Disegno le curve di densità di Gamma al variare dei parametri.
+```{r}
+curve(dgamma(x, 1, 1), ylim = c(0, 2), xlim = c(0, 10),
+ylab = "densità",col = 1, main="Funzioni Gamma")
+curve(dgamma(x, 5, 1), add = TRUE, lty = 1, lwd=2, col = 3)
+curve(dgamma(x, 1, 2), add = TRUE, lty = 2,lwd=2, col = 4)
+curve(dgamma(x, 6, 4), add = TRUE, lty = 4,lwd=2, col = 5)
+curve(dgamma(x, 1/2, 1), add = TRUE, lty = 3,lwd=2, col = 6)
+legend(7, 1.5, c("a=1, b=1",
+"a=5, b=1", "a=1, b=2",
+"a=6, b=4", "a=1/2, b=1"),
+lty = c(1, 1, 2,4,3), col = c(1, 3, 4, 5, 6), bg = "gray95")
+
+```
+
+
+#Lezione 11: Bootstrap
+Applicazioni di bootstrap non parametrico, cioè quando non si specifica la forma delle densità.
+### Applicazioni: bootstrap function, metodo del percentile
+
+##Studio clinico: patch
+Carico la libreria e i dati. Descrizione del dataset.
+```{r}
+#install.packages("bootstrap")
+library(bootstrap)
+data("patch")
+patch
+summary(patch[,c("placebo","oldpatch","newpatch")])
+sd(patch$placebo)
+sd(patch$oldpatch)
+sd(patch$newpatch)
+```
+*I dati presenti nella libreria bootstrap::patch riguardano le rilevazioni di uno studio clinico condotto per valutare la bioequivalenza tra un precedente cerotto che rilascia ormoni ed un nuovo cerotto. Era stato stabilito che la bioequivalenza poteva essere tale solo se il rilascio degli ormoni nel sangue del nuovo cerotto fosse stato riscontrato almeno pari all'80% di quello rilevato nei pazienti che erano stati trattati in precedenza con il vecchio ormone rispetto al placebo. Il dataset contiene i valori di 3 misurazioni del livello di ormone presente nel sangue rilevate per 8 individui rispetto a 3 condizioni sperimentali diverse: cerotto vecchio (V), cerotto nuovo (N), placebo (P).*
+
+Il parametro di interesse è definito dal seguente rapporto:
+theta= (N - V) / (V - P)
+La bioequivalenza tra N e V si definisce solo se |theta| <= 0.2.
+Nel dataset le differenze sono già state calcolate e vengono riportate rispettivamente come Y e Z; perciò theta=Y/Z.
+
+Applicando lo stimatore di plug-in sul vettore d'origine otteniamo la stima puntuale sul campione osservato:
+```{r}
+Y <- patch$y
+Z <- patch$z
+T <- mean(Y)/mean(Z) #stimatore di plug-in
+T
+```
+*La stima di plug-in sul campione osservato è paria a -0.007 che in valore assoluto è inferiore a 0.2. Tuttavia prima di accettare la bioequivalenza occorre considerare se lo stimatore proposto è corretto. Occorre considerare che lo stimatore è distorto in quanto è il rapporto tra due medie artimetiche.*
+
+
+Fuori dal bootstrap, creo la funzione stimatore d'interesse.
+```{r}
+theta <- function(ind){
+           Y <- patch[ind,"y"]
+           Z <- patch[ind,"z"]
+           mean(Y)/mean(Z) }
+```
+
+Applico la funzione bootstrap per generare le 2000 replicazioni.
+```{r}
+patch.boot <- bootstrap(1:8, 2000, theta)
+```
+
+Estraggo il vettore delle B replicazioni bootstrap, che restituisce il vettore che contiene i 2000 valori della stima relizzati su ogni campione estratto applicando lo stimatore plug-in.
+```{r}
+thetastar <- patch.boot$thetastar  #estraggo il vettore delle replicazioni
+         summary(thetastar)
+         sd(thetastar)
+```
+*In media la stima bootstrap si avvicina molto al valore calcolato sul vettore origine. Inoltre si nota che ci sono valori in valore assoluto anche superiori a 0.2 che è il valore soglia stabilito per la bioequivalenza.*
+*La deviazione standard delle replicazioni bootstrap è una misura che indica la variabilita' dovuta al campionamento casuale (spread), e in questo caso è pari a circa 0.1.*
+*Il campo di variazione del vettore è compreso tra il valore max 0.37 e il valore min -0.27*
+
+
+##Istogramma bootstrap
+La rappresentazione grafica tramite l'istogramma permette di valutare la forma della distribuzione bootstrap dello stimatore, una volta classificate le B replicazioni in un certo numero di classi di ampiezza arbitraria.
+E' utile sovrappore al grafico i valori della media aritmetica calcolata sul vettore delle replicazioni e il valore osservato, per osservare meglio lo scostamento.
+```{r}
+hist(thetastar, breaks = 20,
+              main="Distribuzione bootstrap",
+              freq=FALSE, col="skyblue",
+              xlim=c(-0.4,0.4),
+              xlab="Realizzazioni bootstrap del valore dello stimatore")
+         ms<- mean(thetastar)
+         abline(v=ms,col="red2", lwd=3)
+         abline(v=T, col="blue",lwd=3)
+         legend(0.1, 3.5, c("media bootstrap", "valore osservato"),
+                lty=c(1,1), col=c("red2","blue"), bg="gray95")
+```
+*Si noti che la distribuzione bootstrap e' centrata rispetto al valore della statistica osservata nei dati.*
+
+
+Utilizzando il metodo del percentile è possibile visualizzare direttamente nel grafico gli estremi dell'intervallo  i confidenza bootstrap. L'intervallo di confidenza bootstrap calcolato con il metodo del percentile si basa sulla
+distribuzione empirica delle replicazioni bootstrap. Ovvero si utilizzano come limiti dell'intervallo di confidenza i quantili appropriati della distribuzione campionaria. Fissando il livello di copertura pari a 0.95 si determinano gli
+estremi e si possono visualizzare sul grafico.
+```{r}
+qq <- quantile(thetastar, c(0.025,0.975))
+         #alpha <- 0.05
+         #qq <- quantile(thetastar, c(alpha/2, 1-alpha/2))
+         qq
+         hist(thetastar, breaks = 20,
+              main="Distribuzione bootstrap",
+              freq=FALSE, col="skyblue",
+              xlim=c(-0.4,0.4),
+              xlab="Realizzazioni bootstrap del valore dello stimatore")
+         ms<- mean(thetastar)
+         abline(v=ms,col="red2", lwd=3)
+         abline(v=T, col="blue",lwd=3)
+         abline(v=c(qq[1],qq[2]), col="violet", lwd=3)
+         legend(0.1, 3.5, c("media bootstrap", "valore osservato","IC 95%"),
+                lty=c(1,1), col=c("red2","blue","violet"), bg="gray95")
+```
+*Dal grafico si nota che il valore assoluto dell'estremo inferiore dell'intevallo calcolato è più elevato del valore 0.2 fissato come soglia di bioequivalenza. Pertanto secondo questa misura esiste una minima probabilità che il rilascio degli ormoni nel nuovo cerotto non sia equivalente a quella del vecchio. Tuttavia, essendo la distribuzione asimmetrica, sarebbe opportuno calcolare anche l'intervallo di confidenza con il metodo BCa bootstrap.*
+
+##Errore di stima
+La distribuzione stimata con il bootstrap dell'errore di stima si ottiene considerando le differenze tra ciascun valore del vettore bootstrap e il valore originario.
+```{r}
+ERR <- (thetastar - T)
+         head(ERR)
+         summary(ERR)
+         sd(ERR)
+```
+*In media gli errori sono quasi 0 e questo indica che lo stimatore è non distorto.*
+
+Istogramma dell'errore di stima.
+```{r}
+hist(ERR, breaks = 20, freq=F,
+              main="Distribuzione bootstrap dell'errore di stima", col="violet",
+              xlim=c(-0.4,0.7), xlab="Realizzazioni bootstrap dell'errore di stima")
+         abline(v=mean(ERR),lwd=3,       col="red")
+         legend(0.2, 3, "Media degli errori",   lty=c(1,1), col="red", bg="gray95")
+```
+*Dal grafico si nota che un errore di ±0.1 è possibile mentre un errore di ±0.2 poco probabile. Pertanto il vero valore del rapporto dovrebbe essere compreso tra circa (-0.07-0.1) = - 0.17 e (-0.07+0.1)= 0.03. Benchè minima esiste anche una probabilità per l'errore di stima pari a 0.2. In tal caso si avrebbe (-0.07-0.2) = -0.27 e (-0.07-0.2) = 0.13.*
+
+
+#Lezione 12: Bootstrap per l'indice di asimmetria
+###Applicazioni: bootstrap ciclo for, BCa
+
+Carico la libreria e i dati. Descrizione del dataset.
+```{r}
+nervo <- read.table("nervo.dat", header = TRUE)
+         #setwd(nervo.dat)
+         #nervo <- read.table("F:/Modelli 2 1718/nervo.dat", header = T)
+         tempi <- nervo$A
+         hist(tempi, breaks = 20, freq=FALSE,
+              main="Istogramma dei dati osservati", col="orange4",
+              xlab= "Pulsazioni lungo la fibra del nervo")
+         summary(tempi)
+         sd(tempi)
+```
+*Cox e Lewis (1966) hanno registrato 799 tempi di attesa tra pulsazioni successive lungo la fibra del nervo. Dall'istogramma, si nota che i tempi di attesa variano da pochi millesimi di secondo a qualche secondo e che la media e la mediana sono molto diverse, pertanto ci si aspetta asimmetria.*
+*L'istogramma e la natura dei dati che sono tempi di attesa suggeriscono una distribuzione esponenziale per il fenomeno registrato.*
+
+Prima di procedere al metodo bootstrap, si cerca di stabilire se la distribuzione esponenziale ipotizzata è quella corretta confrontando la funzione di ripartizione empirica con la funzione teorica di una esponenziale con parametro lambda. Dato che la stima di massima verosimiglianza di lambda corrisponde al reciproco della media aritmetica campionaria, la funzione teorica da confrontare sarà quindi quella di una esponenziale di parametro 1/mean(X).
+```{r}
+plot(ecdf(tempi), do.points=FALSE, main = "Confronto F empirica e teorica", lwd=3)
+la <- 1/mean(tempi)
+curve(pexp(x,la), col="red", add=TRUE, lwd=2)
+legend(0.3,0.6, col=c("black", "red"),
+                c("emp.", "teor."), lty=c(1,1), lwd=2,
+                cex = 1)
+```
+*Le funzioni sono praticamente sovrapposte, per cui la distribuzione ipotizzata è corretta.*
+
+Supponiamo di essere interessati quindi allo stimatore dell'indice di asimmetria. L'asimmetria considera il momento terzo della distribuzione di una variabile casuale X con media ?? e varianza sigma2.
+
+Impiegando la funzione e1071::skewness si ottiene una stima dell'indice per i dati campionari (si noti che è possibile specificare come input della funzione anche un altro tipo di calcolo per l'indice).
+```{r}
+require(e1071)
+         #?skewness
+         sk <- skewness(tempi)
+         sk
+```
+*Essendo il valore superiore a 1 c'è asimmetria a destra per la distribuzione empirica.*
+
+##Generazione del vettore bootstrap tramite ciclo for.
+La funzione sample permette di ottenere un campione dal vettore, di lunghezza n, con reintroduzione. Iterando B volte l'operazione sample, si ottiene il vettore boostrap, alternativamente alla funzione già integrata.
+Occorre impostare il boostratp fissando B: il numero di campioni bootstrap, n: la numerosità di ogni campione, Tboot: vettore di lunghezza B di destinazione e contenente il valore realizzato per lo stimatore in ogni campione bootstrap (replicazioni bootstrap).
+```{r}
+B <- 200 #numero replicazioni
+         n <- length(tempi); #numerosità campionaria
+         Tboot <- rep(0,B)   #vettore vuoto di lunghezza B
+         #Tboot <- numeric(B)
+         #sample(tempi, n, replace = TRUE) fa un ricampionamento
+         for(i in 1:B){
+           Xstar <- sample(tempi, n, replace = TRUE)
+           Tboot[i] <- skewness(Xstar)
+         }
+         summary(Tboot)
+         sd(Tboot)
+```
+*Il valore medio delle delle replicazioni bootstrap è simile al valore calcolato sui dati di partenza; si nota che il valore massimo è pari a 2.2. La stima della deviazione standard ottenuta con le replicazioni bootstrap esprime un margine di errore per la stima puntuale ed è pari a circa 1.6.*
+
+La distribuzione bootstrap può essere rappresenta con l'istogramma a cui si aggiunge il valore dell'asimmetria calcolato sui dati di origine e quello medio delle replicazioni bootstrap.
+```{r}
+hist(Tboot, freq = F,
+              xlim=c(1.2,2.5),
+              breaks = 20,
+              col="beige", main="Istogramma bootstrap", xlab="Replicazioni bootstrap di asimmetria")
+mboot <- mean(Tboot)
+abline(v=sk, col="blue",lwd=3)
+abline(v=mboot, col="green",lwd=3)
+legend(2, 2.5, c("Media bootstrap", "Valore osservato"),
+                lty=c(1,1), col=c("green","blue"), bg="gray99")
+```
+
+Data l'asimmetria della distribuzione, la stima intervallare per lo stimatore d'interesse la calcoliamo col metodo non parametrico BCa, che meglio si adatta a questo casi.
+Il metodo BCa è implementato nella funzione bootstrap::bcanon che richiede come input il vettore dei dati, il numero di replicazioni bootstrap B, la funzione che definisce lo stimatore skewness, ed i livelli alpha/2 e 1-alpha/2.
+```{r}
+require(bootstrap)
+         ciBCa <- bcanon(tempi,B, skewness, alpha = c(0.025, 0.975))
+         #a <- 0.05
+         #CIBCa <- bcanon(A,B, skewness, alpha = c(a/2, 1-a/2))
+         ciBCa$confpoints
+         hist(Tboot, freq = F,
+              xlim=c(1.2,2.5),
+              breaks = 20,
+              col="beige", main="Istogramma bootstrap", xlab="Replicazioni bootstrap di asimmetria")
+         abline(v=sk, col="blue",lwd=3)
+         abline(v=mboot, col="green",lwd=3)
+         abline(v=c(ciBCa$confpoints[1,2],v=ciBCa$confpoints[2,2]),
+                col="orange", lwd=3)
+         legend(2.0, 2.5, c("Skewness osservata", "Media boot", "IC BCa"),       lty=c(1,1), col=c("blue","green", "orange"), bg="gray95",       cex=0.7)
+```
+*
+*NB:La funzione restituisce i valori degli estremi dell'intervallo ottenuti con questo metodo nell'oggetto confpoints. Data la leggera asimmetria a destra si otterrà che l'estremo superiore è più grande di quello calcolato con il metodo del percentile.*
+
+#Lezione 13: bootstrap per lo stimatore della popolazione di equilibrio
+###Applicazione: stimatore funzione,regressione lineare
+
+Nell'esempio seguente i biologi sono interessati a stimare la popolazione di equilibrio per la vitalità della specie, e nel caso seguente riferito ai salmoni la regolamentazione della pesca che è inlfuenzata dal numero di uova depositate e dalla presenza di predatori.
+Nel caso dell'esempio considerato è importante stabilire la relazione che lega il numero dei salmoni giovani Gt presenti nell'anno t al numero dei salmoni adulti At presenti nello stesso anno. Il modello deterministico che lega giovani e adulti è dato da:
+Gt = (alpha1XAt) / (1+ alpha2XAt) con parametri alpha1 e alpha2 che dipendono dalla fertilità e dalla probabilità di schiusa delle uova, rispettivamente.
+La relazione è resa lineare se si considerano i reciproci delle variabili:
+1/Gt = beta1 + beta2X(1/At) + errore. Il modello è un modello di regressione lineare che si basa sulle ipotesi di indipendenza e di identica distribuzione delle variabili casuali sottostanti.
+
+La popolazione di equilibrio è la numerosità totale che viene definita per la vitalità della specie e la regolamentazione della pesca come quel numero tale che se At = E allora almeno in media anche Gt = E. E pertanto è la soluzione dell'equazione seguente: E = (1 - beta2)/beta1 e viene considerato lo stimatore d'interesse per il bootstrap.
+
+Carico i dati e descrizione.
+```{r}
+sal <- read.table("F:/Modelli 2 1718/salmoni.dat", header = T)
+                     giovani <- sal[,2]
+                     adulti <-sal[,3]
+                     summary(sal[,c(2,3)])
+                     sd(giovani);sd(adulti)
+```
+*I dati presenti nel file salmoni.dat riguardano il numero dei salmoni monitorati dall'anno 1952 all'anno 1991 una certa zona (numeri in migliaia). Si tratta del numero dei salmoni nati nell'anno in grado abbandonare il fiume (giovani) e arrivare all'oceano e del numero dei salmoni che lo stesso anno risalgono il fiume per la riproduzione (adulti). I salmoni ritornano a riprodursi nel fiume dove sono nati dopo alcuni anni e non tutte le coorti lo fanno nello stesso tempo.*
+*I due gruppi registrano medie e deviazioni standard molto differenti.*
+
+```{r}
+par(mfrow=c(1,2))
+plot(adulti, giovani, col="salmon1", lwd=3, main = "# Salmoni")
+abline(a=0,b=1,lty = "dashed")
+plot(1/adulti,1/giovani, col="salmon1", lwd=3, main = "Reciproco # salmoni")
+```
+*Dai diagrammi a dispersione dei dati, riportato in figura ed ottenuto confrontando i punti rispetto alla bisettrice, si evince che ci sono più giovani che adulti quando la popolazione non è molto numerosa. Al contrario, al crescere della numerosità complessiva della popolazione gli adulti sono più dei giovani.*
+
+Verifico l'indipendenza temporale delle osservazioni tramite la funzione di autocorrelazione per gli adulti e i giovani e tramite la funzione di autocovarianza tra i due gruppi.
+```{r}
+acf(adulti, ylim=c(-1,1), col="salmon1", main="Autocorrelazione adulti", lwd=5, lag.max = 40)
+```
+
+```{r}
+acf(giovani, ylim=c(-1,1), col="salmon1", main="Autocorrelazione giovani", lwd=5, lag.max = 40)
+```
+
+```{r}
+ccf(giovani, adulti,ylim=c(-1,1), col="salmon3", main="Autocovarianza giovani & adulti",lwd=5, lag.max = 40)
+```
+*Tutti i grafici evidenziano indipendenza temporale, fattore giustificabile dal fatto che gli adulti presenti nell'anno t non sono i giovani presenti nell'anno t-1.*
+
+##Regressione lineare: stima dei parametri
+Utilizzando la funzione stats::lm si ottengono i valori stimati dei parametri del modello, che serviranno per derivare la stima puntuale dell'indice di equilibrio.
+
+```{r}
+m <- lm(I(1/giovani)~I(1/adulti))
+beta <- m$coefficients; beta
+```
+*Mi attendo che il reciproco dei giovani cresca di 0.7 al variare di una unità nel reciproco degli adulti, cioè ogni 1/1000 adulti, i giovani crescono di circa 1/700.*
+
+Il grafico della retta di regressione rispetto ai valori osservati è il seguente
+```{r}
+plot(adulti,giovani, col="salmon1", lwd=3, main="valori oss. e retta di regressione")
+curve(1/(beta[1]+beta[2]/x),min(adulti),max(adulti),add=TRUE)
+```
+
+
+```{r}
+summary(m)
+```
+
+##Valutazione di bontà del modello
+###Indice di adattamento
+Adjusted R-squared:  0.9895 
+*Il valore è molto alto quindi il modello descrive molto verosimilmente i dati osservati.*
+
+###Analisi dei residui
+```{r}
+par(mfrow=c(1,2))
+plot(residuals(m), xlab = "id residui", ylab = "residui della retta di regressione lineare", col="hotpink")
+plot(fitted(m),residuals(m), xlab = "valori previsti dal modello", ylab = "residui della retta di regressione lineare",col="hotpink" )
+```
+*L'analisi grafica dei residui di regressione attraverso il diagramma a dispersione e attraverso il diagramma dei valori previsti dal modello rispetto ai residui stimati mostra che i residui nel complesso si distribuiscono in modo casuale. Il modello ha un buon adattamento ai dati, tuttavia è evidente nel secondo grafico un gruppo distinto sulla destra che riguarda valori bassi per il numero di giovani.*
+
+Un altro modo per testare i residui è il confronto tra i quantili della distribuzione empirica con i quantili teorici di una normale standard.
+```{r}
+qqnorm(residuals(m))
+```
+*Non si evidenziano scostamenti significativi.*
+
+Infine è utile verificare l'incorrelazione dei residui.
+```{r}
+acf(residuals(m),ylim=c(-1,1), lag.max = 40, lwd=3, col="salmon1",
+    main="Autocorrelazione dei residui")
+```
+*Il grafico mostra incorrelazione.*
+*Tutte le assunzionifatte sul modello, alla luce dei test fatti, risultano corrette.*
+
+##Bootstrap
+La stima puntuale della popolazione di equilibrio si ottiene:
+```{r}
+E <- (1-beta[2])/beta[1]; E
+```
+*Il numero dei salmoni adulti dovrebbe essere pari a 150000 unità affichè sia preservata la specie. Un livello di accuratezza per questo valore si ottiene utilizzando il bootstrap e calcolando l'intervallo di confidenza.*
+
+Applicando il bootstrap con la funzione sample si ricampiona direttamente dalle osservazioni. Si noti che occorre stimare il modello su ogni campione ottenuto e ricavare il valore realizzato per lo stimatore in ogni campione.
+```{r}
+n <- length(adulti)
+B <- 1000
+Esti <- numeric(B)
+
+for (d in 1:B) {   
+  index <-sample(1:n, size = n, replace = TRUE) 
+  ad <- adulti[index]       
+  gi <- giovani[index]
+  m <- lm(I(1/gi)~I(1/ad))
+  be <- coef(m)
+  Esti[d] <- (1-be[2])/be[1]
+}
+
+mean(Esti)   
+summary(Esti)
+sd(Esti)
+mean(Esti)- E
+```
+*La media delle replicazioni è molto vicina al valore osservato*
+*La deviazione standard delle replicazioni bootstrap fornisce una misura della variabilità del numero di equilibrio nel campionamento casuale. La sd risulta circa 3.9*
+*Osservando il campo di variazione, notiamo che il range è molto ampio, da un minimo di 137000 unità ad un massimo di 163000.*
+*L'errore di stima o distorsione è molto piccolo,ed è di 0.13*
+
+La stima intervallare si ottiene applicando il metodo del percentile.
+```{r}
+Q <- quantile(Esti, c(0.025,0.975));
+Q
+hist(Esti, main = "Distribuzione Bootstrap del numero di equilibrio",
+xlim = c(125,170),
+ylim = c(0,0.2),
+breaks=300,
+freq=FALSE,
+ylab="Densità",
+xlab="Realizzazioni bootstrap del valore dello stimatore")
+abline(v=c(E, mean(Esti), Q[1], Q[2]), col=c("red","blue", "green","green"))
+legend(130, 0.1, c("numeroOR","nmediaB", "IC 95%"),
+col=c("red","blue", "green"),
+lty=c(1,1,1,1), cex=0.7)
+```
+*L'intervallo di confidenza è il 95% centrale nella distribuzione delle replicazioni bootstrap. Ovvero le stime plausibili sono quelle che ricadono tra il 2.5-esimo percentile ed il 97.5-esimo percentile della distribuzione bootstrap. Con un livello di confidenza del 95%, il numero della popolazione di equilibrio dei salmoni rispetto al modello considerato è quello compreso tra le 143000 e le 158000 unità.*
+
+###Errore di stima
+```{r}
+hist((Esti-E),
+main = "Distribuzione bootstrap dell'errore di stima",
+xlim = c(-20,20),
+ylim = c(0,0.2),
+breaks=300,
+freq=FALSE,
+ylab="Densità", xlab = "Errori di stima")
+```
+*La distribuzione degli errori di stima permette di stabilire che in base al modello considerato un errore di ±5000 unità rispetto al valore 150000 è possibile mentre di ±10000 unità è improbabile.*
+
+#Lezione 14: bootstrap per lo stimatore del rischio relativo
+###Appl: tabella di contingenza, bootstrap, RR function, BCa
+
+Il rischio relativo è il rapporto tra due quantità ed è denominato così negli studi di coorte dove vengono confrontati individui che presentano e non presentano una certa qualità/patologia.
+N11 sono coloro che presentano la patologia e hanno questa caratteristica (esposti); la controparte N01 sono coloro che presentano la patologia ma non hanno la caratteristica (non esposti).
+Le proporzioni sono calcolate rispetto ai totali di riga N1. ed N0.
+Le probabilità condizionate di rischio sono P1^ probabilità di malattia negli esposti => P(Y=1|X=1) e P0^ prob di malattia nei non esposti => P(Y=1|X=0)
+Le stime di max verosimiglianza: per P1=N11/N1. e per P0=N01/N0, dove N01 è una binomiale (n0.,p0) e N11 (n1.,p1)
+La stima di RR = P1^ / P0^
+Il richio relativo pari a 1 indica indipendenza tra le due variabli mentre se diverso da 1 esprime il grado di associazione tra le variabili.
+RR si approssima a OR quando le prob di rischio sono basse.
+OR=p1(1-p1)/p0(1-p0)
+
+##Creazione del dataset
+Creo dataset di un CAMPIONAMENTO PROSPETTICO in cui ho 2 gruppi di soggetti.
+gruppo 1: soggetti con alta pressione (esposti al fattore di rischio)
+gruppo 2: soggetti con bassa pressione (non esposti)
+Il gruppo 1 conta 3338 esposti, il gruppo 2 2676 non esposti.
+Dagli esposti ho un campione di malati 55 soggetti, dai non esposti ho un campione di malati 21 soggetti.
+```{r}
+dataR <- data.frame(X = rep(c("bassaP0", "altaP1"),
+c(2676, 3338)),
+Y = rep(c(FALSE, TRUE, TRUE, FALSE),
+c(2676-21, 21, 55, 3338-55)))
+head(dataR)
+
+table(dataR)
+```
+*La tabella di contingenza si ottiene con la funzione table che restituisce la tabella con le frequenze assolute congiunte.*
+
+Calcolo le stime di massima verosimiglianza delle probabilità di rischio.
+```{r}
+p0 <- 21/2676   ;p0
+p1 <- 55/3338   ;p1
+```
+*Tra i soggetti con pressione bassa la probabilità stimata di sviluppare malattie cardiovascolari è dell'1%, mentre tra i soggetti con pressione alta è del quasi 2%. Essendo queste due probabilità piccole la malattia potrebbe essere classificata come rara.*
+
+La stima di RR è data dal rapporto delle due probabilità calcolate.
+```{r}
+RR <- p1/p0; RR
+```
+*Essendo superiore a 1 esso indica un'associazione positiva della malattia con la pressione. La proporzione di malati con pressione alta è circa 2 volte quella che si riscontra tra coloro che presentano pressione bassa.*
+
+Le stime delle due proporzioni possono essere ricavate attraverso la tabella di contingenza delle frequenze relative in cui si dividono le frequenze assolute per il valore marginale di riga.
+```{r}
+CC <- prop.table(table(dataR),1); CC
+```
+
+E il rischio relativo calcolato come rapporto delle celle 3 e 4
+```{r}
+RR <- CC[3]/CC[4]; RR
+```
+
+##Applicazione bootstrap
+
+Tramite il ciclo for riottengo B volte dei valori delle probabilità di rischio.
+```{r}
+B <- 2000
+RRB <- rep(0,B)
+n <- dim(dataR)[1]  #il campione originario è composto da 6014 valori
+#n è il totale della prima colonna del df che contiene il totale di esposti+non esposti
+set.seed(1023)
+for(i in 1:B){
+ind <-sample(1:n, size = n, replace = TRUE)
+datB <- dataR[ind,]
+CCB <- prop.table(table(datB),1)
+RR <- CCB[3]/CCB[4]
+RRB[i]<-RR
+}
+
+summary(RRB)
+sd(RRB)
+```
+*Si noti che nelle replicazioni il valore stimato  di RR assume un massimo pari a circa 7, il che esprime una forte associazione tra malattia ed esposizione, e un minimo pari a circa 0.9, il che esprime quasi assenza  di associazione, quindi si osservano situazioni molto diverse. La media è pari a circa 2.2. La deviazione standard è piccola e pari a circa 0.6*
+
+Calcolo l'intervallo di confidenza col metodo del percentile.
+```{r}
+alpha <- 0.05
+qq <- quantile(RRB, c(alpha/2, 1-alpha/2))
+qq
+```
+*L'IC c
+
+##Istogramma bootstrap
+Disegno l'istogramma per la rappresentazion grafica delle stime bootstrap, su cui visualizzare il valore osservato, la media boot, i limiti dell'intervallo di confidenza calcolato col metodo del percentile.
+```{r}
+hist(RRB,
+main = "Distribuzione Bootstrap per il rischio relativo",
+xlim = c(0,7),
+ylim = c(0,2),
+breaks=300,
+freq=FALSE,
+ylab="Densità",
+xlab="Realizzazioni bootstrap del valore dello stimatore")
+abline(v=c(RR, mean(RRB), qq[1], qq[2]), col=c("red","blue", "violet","violet"), lwd=2)
+legend(4, 1.5, c("mediaOR","mediaB", "IC Percentile 95%"),
+col=c("red","blue", "violet"), lty=c(1,1,1,1), cex=0.7, bg ="yellow")
+```
+*Utilizzando il metodo dei percentile l'intervallo di confidenza è il 95% centrale nella distribuzione delle replicazioni bootstrap. Ovvero le stime plausibili sono quelle che ricadono tra il 2.5-esimo percentile ed il 97.5-esimo percentile della distribuzione bootstrap. Essendo grande la distanza tra la media osservata nei dati di origine e quella nelle replicazioni bootstrap ed essendo presente asimmetria nella distribuzione bootstrap è opportuno considerare anche l'intervallo ottenuto con il metodo BCa.*
+
+##Metodo BCa
+Per calcolare i limiti di confidenza col metodo BCa, devo prima creare lo stimatore bootstrap d'interesse (RR) tramite function.
+```{r}
+thetaR <- function(ind){
+datB <- dataR[ind,]
+CCB <- prop.table(table(datB),1)
+CCB[3]/CCB[4]
+}
+
+require(bootstrap)
+set.seed(1023)
+CIBCa <- bcanon(1:n,B,thetaR, alpha=c(0.025,0.975))
+CIBCa$confpoints
+
+CIBCa$confpoints[1,2]
+```
+*Nel contesto in esame è più opportuno questo secondo intervallo, ma si osserva tuttavia che con un numero di replicazioni elevato i due intervalli sono simili e che quest'ultimo intervallo corregge in questo caso principalmente la distorsione. Pertanto i valori del rischio relativo di sviluppare la malattia possono essere compresi tra 1.3 e 3.6. Ovvero con una probabilità pari a 0.95 la proporzione dei malati con pressione alta potrebbe anche essere pari a 3 volte quella dei malati con pressione bassa.*
+
+```{r}
+hist(RRB,
+main = "Distribuzione Bootstrap per il rischio relativo",
+xlim = c(0,7),
+ylim = c(0,2),
+breaks=300,
+freq=FALSE,
+ylab="Densità",
+xlab="Realizzazioni bootstrap del valore dello stimatore")
+abline(v=c(RR, mean(RRB), qq[1], qq[2]), col=c("red","blue", "violet","violet","hotpink"), lwd=2)
+abline(v=c(CIBCa$confpoints[1,2], CIBCa$confpoints[2,2]), col="green", lwd=2)
+legend(4, 1.5, c("mediaOR","mediaB", "IC Percentile 95%", "IC BCa 95%"),
+col=c("red","blue", "violet", "green"), lty=c(1,1,1,1), cex=0.7, bg ="yellow")
+```
+
+#Lezione 16:applicazione dell'algortimo Expectation-Maximization
+
+Si parte dalla costruzione di una tabella di contingenza 2x3, in cui manca un valore di frequenza.
+Nella tabella di contingenza i dati completi possono essere rappresentati come c = (y, u) dove y = (y11, y12, y13, y21, y22) sono i dati osservati, mentre u = y23 è il dato mancante.
+In base ad un modello lineare del tipo yij = ?? + alphai + betaj + eij, è possibile utilizzare l'algortimo EM per la stima dei parametri e in base ai valori stimati imputare il dato mancante.
+
+Esso è uno strumento di massimizzazione e prevede 2 passi:
+-EXPECTATION: inizialmente si dà un valore ai dati mancanti e si calcola il valore atteso della log-ver marginale dei dati completi condizionati ai dati osservati.
+- MAXIMIZATION: Per ogni passo si trovano nuove stime dei parametri.
+Il criterio di arresto dell'algoritmo è il raggiungimento di un limite inferiore (epsilon piccolo scelto a priori) della distanza dei valori ottenuti al passo i con quelli ottenuti al passo i+1: punto di convergenza. (criterio di convergenza)
+
+Gli step della procedura di stima sono i seguenti:
+. Si assegna un valore iniziale per le frequenze non osservate y23; può ad esempio essere scelto in base al valore medio dei valori delle frequenze osservate;
+. al passo E (Expectation): in base al valore assegnato si calcolano le stime dei parametri utilizzano le soluzioni note in forma chiusa che sono le seguenti: u^ = mean(y) ,   alphai^ = mean(yi.) - mean(y)   , betaj^ =mean(y.j) - mean(y)
+. Ottenute le stime si imputa il valore mancante calcolato con le stime
+y23 = u^ + alphai^ + betaj^
+. al passo M (Maximization): si procede per via iterativa ricalcolando i valori dei parametri in base al valore imputato y al passo i fino al raggiungimento del valore fissato per il criterio di convergenza.
+
+##Creazione tabella di contingenza.
+```{r}
+fa <- c(10,15,17,22,23,NA)
+y <- matrix(fa, nrow = 2,ncol = 3,byrow = T)
+#y <- matrix(c(10,15, 17, 22, 23, NA),2,3,byrow=TRUE)
+y
+```
+
+##Impostazione del calcolo dei parametri tramite le soluzioni in forma chiusa
+La seguente funzione permette di assegnare un valore iniziale al valore mancante della tabella e ricostruice il valore in base alle soluzioni in forma chiusa per i parametri del modello. Si noti l'utilizzo della funzione apply.
+```{r}
+em1 <- function(y23, y){   #input: missing e tabella di partenza
+  ystar <- y  #rinomino la tabella per lavorarci
+  ystar[2,3] <- y23   #estraggo e associo la cella del missing tra le matrici
+  mu.hat <- mean(ystar) 
+  alpha.hat <- apply(ystar, MAR = 1, mean) - mean(ystar)
+  beta.hat  <- apply(ystar, MAR = 2, mean) - mean(ystar)
+  y23 <- mu.hat + alpha.hat[2] + beta.hat[3]
+  return(c(mu = mu.hat, alpha = alpha.hat, beta = beta.hat, 
+           y23 = y23))   
+  # in output richiedo di vedere i valori stimati dei parametri e del missing, che variano in funzione del valore iniziale dato a y23
+} 
+
+```
+
+Applicando la funzione generata ad un valore scelto a piacere per il dato mancante, la funzione restituisce i valori dei parametri del modello ottenuti con le soluzioni in forma chiusa.
+Ad esempio assegno come valore la media aritmetica dei valori osservati.
+```{r}
+m <- mean(fa[-6]); m
+em1(m,y)
+```
+*Inserendo come valore mancante la media aritmetica degli osservati, il valore finale assegnato al missing è 20.6.*
+
+##Funzione em.step di iterazione dell'algoritmo EM
+La seguente funzione em.step richiama la funzione precedente em1 per ripetere la procedura di calcolo aggiornando le stime fino a convergenza per ottenere le stime dei parametri di massima verosimiglianza ed il corrispondente valore del dato mancante.
+La funzione em.step ha 2 input: i valori della tabella di contingenza ed il livello di tolleranza E per la convergenza dell'algoritmo EM fissato come valore di default pari a E = 10^-8.
+Si noti che viene impiegata la funzione dist per calcolare la distanza tra i valori contenuti nell'oggetto trace all'iterazione i+1 e all'itereazione i-esima.
+Si noti l'ultilizzo del costrutto while per incrementare il contatore fino a convergenza.
+```{r}
+set.seed(183)
+em.step <- function(y, epsilon= 1e-8){
+  trace <- NULL   #vettore vuoto che conterrà i valori dei parametri e di y23 ad ogni iterazione
+  convergenza <- FALSE   #stabilisco convergenza
+  trace <- t(em1(y23 = mean(y, na.rm = TRUE), y = y ))   # inputo al mancante inizialmente la media degli osservati
+  y23id <- grep("y23", colnames(trace)) 
+  i <- 0 #contatore delle interazioni posto a 0
+  while(!convergenza){  #il ciclo lo fa solo se convergenza non viene raggiunta
+    i <- i + 1  #passi di 1
+    trace <- rbind(trace, em1(y23 = trace[i, "y23"], y = y))
+    convergenza <- (dist(trace[i:(i+1), -y23id]) < epsilon)  #distanza
+  }
+  return(trace)   #vettore che contiene i valori di ogni iterazione
+}
+
+head(em.step(y))
+tail(em.step(y))
+```
+*La funzione em.step restituisce un output di 49 righe, pari al numero delle iterazioni necessarie prima di raggiungere la convergenza.*
+*Raggiunta la convergenza, le stime di max verosimiglianza dei parametri sono mu=19, alpha1=-5,alpha2=5, beta1=-3,beta2=0,beta3=3, y23=27.*
+*Il valore mancante che massimizza la verosimiglianza totale è quindi 27. Osservando l'output si nota che alle iterazioni iniziali le stime sono piuttosto differenti tra loro, mentre alla fine essendo vicini alla convergenza, le stime se equivalgono.*
+
+Cosa succede aumentando epsilon? Cioè permettendo una distanza maggiore tra le ultime due iterazioni.
+
+```{r}
+set.seed(183)
+em.step <- function(y, epsilon= 1e-3){
+  trace <- NULL   #vettore vuoto che conterrà i valori dei parametri e di y23 ad ogni iterazione
+  convergenza <- FALSE   #stabilisco convergenza
+  trace <- t(em1(y23 = mean(y, na.rm = TRUE), y = y ))   # inputo al mancante inizialmente la media degli osservati
+  y23id <- grep("y23", colnames(trace)) 
+  i <- 0 #contatore delle interazioni posto a 0
+  while(!convergenza){  #il ciclo lo fa solo se convergenza non viene raggiunta
+    i <- i + 1  #passi di 1
+    trace <- rbind(trace, em1(y23 = trace[i, "y23"], y = y))
+    convergenza <- (dist(trace[i:(i+1), -y23id]) < epsilon)  #distanza
+  }
+  return(trace)   #vettore che contiene i valori di ogni iterazione
+}
+
+head(em.step(y))
+tail(em.step(y))
+```
+*La convergenza si raggiunge con un numero inferiore di iterazioni, e il risultato relativo al dato mancante è di circa 27, cioè uguale a prima.*
+
+##Grafico dei valori assunti dai parametri in ogni iterazione
+
+La rappresentazione grafica dei valori ottenuti è possibile utilizzando la funzione matplot
+```{r}
+ris<- em.step(y)
+names1 <- expression(mu, alpha[1], alpha[2], beta[1], beta[2], beta[3])
+pal1<- c("red", "yellow", "green", "violet", "blue", "orange")
+
+matplot(ris[,-7], type = "l", col = pal1, lwd = 2, lty = 1,
+xlab = "Iterazioni dell'algoritmo EM",
+ylab = "Stime dei parametri del modello")
+legend(x = 5, y = 15, legend = names1, lwd = 2 , col = pal1, lty = 1,
+horiz=TRUE, cex=0.8)
+
+
+```
+*Si noti che i valori stimati variano particolarmente nelle prime 10 iterazioni e poi si ha un aggiustamento nelle restanti che riguarda alcune cifre decimali.*
+
+#Lezione 18: Densità miscuglio con pesi noti
+
+Nel caso di due funzioni componenti (k = 2) con distribuzione Gaussiana di parametri mu e var, la funzione funcmxn calcola il valore della densità miscuglio per i valori di y.
+La funzione restituisce la densità della f. miscuglio nel punto x.
+ATTENZIONE: NELLA FUNZIONE VA INSERITA LA SD, NON LA VARIANZA!
+```{r}
+funcmxn <- function(x,p,mu,sd){
+  f1 <- dnorm(x,mu[1],sd[1])
+  f2 <- dnorm(x,mu[2],sd[2])
+  fmis <- p*f1+(1-p)*f2
+  fmis
+}
+```
+
+Assegnamo ora un valore per pigreco in (0, 1), indicato con p ad una delle componenti (i pesi poi devono sommare a 1), e generiamo un vettore per le medie e le varianze della prima e della seconda componente.
+Supponiamo di avere una normale (1,1) e una normale (4,1).
+Il valore della densità miscuglio (le cui due componenti sono le seguenti f1 N(1, 1) e f2 N(4, 1) e si assegna il peso della prima componente pari a p1 = 0.4) nel punto y = 0.3 risulta pari a:
+```{r}
+mu1 <- c(1,4)
+sd1 <- c(1,1)
+p1 <- 0.4
+funcmxn(0.3,p1,mu1, sd1)
+
+```
+
+Disegno della miscuglio per una serie molto grande di valori y
+```{r}
+y <- seq(-5,10,0.01) 
+length(y)
+pr1 <- funcmxn(x = y, p = p1, mu = mu1, sd = sd1)
+plot(y, pr1, xlab = "y", ylab="Density", lwd=3,
+col="lightblue1", type = "l",
+main="Densità miscuglio di N(1,1) e N(4,1) con peso 0.4")
+
+```
+*Dato che la medie delle due distribuzioni sono diverse e le varianze uguali, la distribuzione chè ha maggiore densità di frequenza attorno alla media è quella con peso più alto (0.6). Infatti la densità più alta si ha attorno a 4.*
+
+Al variare del peso, la forma della densità cambia molto.
+```{r}
+p2 <- 0.9
+pr2 <- funcmxn(y,p=p2,mu=mu1,sd=sd1)
+
+plot(y, pr2,
+     ylab="Densità miscuglio", xlab = "Valori generati",
+     xlim=c(-5,10),
+     main="Densità miscuglio di N(1,1) e N(4,1) con peso 0.9", lwd=2, type = "l",     col="green")
+```
+
+La seguente densità miscuglio è ottenute considerando f1 ??? N(4, 1) e f2 ??? N(4, 64) sempre con peso pari a 0.6 per la seconda componente.
+```{r}
+mu2 <- c(4,4)
+sd2 <- c(1,8)
+pr3 <- funcmxn(y,p1,mu2,sd2)
+plot(y, pr3,
+     ylab="Densità miscuglio", xlab = "Valori generati",
+     xlim=c(-5,10),      main="Densità miscuglio di N(4,1) e N(4,64) con peso 0.4", lwd=2, type = "l",     col="green")
+```
+
+#Lezione 19: applicazione dei modelli miscuglio per i valori del colesterolo
+
+I dati riportati in datacol.Rdata riguardano individui che sono stati selezionati per uno studio volto a valutare il ruolo del colesterolo come fattore di rischio per le malattie cardiovascolari. I valori del colesterolo
+(espressi in mg su dL di plasma) sono riferiti a due distinti gruppi di maschi (1) e femmine (0).
+Caricamento e descrizioni dei dati.
+```{r}
+load("datacol.Rdata")
+head(datacol)
+summary(datacol$cholst)
+table(datacol$sex)
+```
+*A giudicare dal summary, potremmo ipotizzare che i dati provengano da una popolazione non omogenea rispetto ai valori del colesterolo.*
+
+Lo scopo è trovare gruppi omogenei che abbiano distribuzione simile per il valore di interesse.
+Si creano due vettori riferiti ai dati delle donne xf e degli uomini xm.
+```{r}
+indf <- datacol[,3]==0
+indm <- datacol[,3]==1
+xf <- datacol[indf,2]
+xm <- datacol[indm,2]
+summary(xf)
+sd(xf)
+summary(xm)
+sd(xm)
+```
+*Si nota che in media le donne presentano un valore più alto del colesterolo. La deviazione standard nei due gruppi è anch'essa differente.*
+
+La seguente rappresentazione mostra i valori con un diagramma a dispersione dei rispettivi valori dei maschi e delle femmine.
+```{r}
+with(datacol, symbols(x=1:200, y=cholst, circles=sex, inches=1/30 ,
+ann=F, bg="red", fg="black"))
+```
+
+##Analisi preliminare: normalità della popolazione
+Tramite il test si Shapiro, testo la normalità dei gruppi e della popolazione intera. Se i test portano a rifiutare l'ipotesi di normalità, allora la non omogeneità è verosimile.
+```{r}
+shapiro.test(xf)
+shapiro.test(xm)
+shapiro.test(datacol$cholst)
+```
+*I risultati del test portano a dire che in tutti e tre i casi l'ipotesi di normalità viene rifiutata, in particolare per il caso delle donne (pvalue circa 0). Negli uomini l'evidenza è minore (pvalue circa 0.04).*
+
+##Scelta del modello miscuglio
+La libreria denominata mclust (Gaussian Mixture Modelling for Model-Based Clustering), permette di stimare i parametri del modello miscuglio con componenti Gaussiane. Nel seguito si stima un modello miscuglio relativamente alla popolazione femminile, che è quella che risulta più disomogenea al suo interno.
+La funzione mclustBIC restituisce la tabella con i valori dell'indice di adattamento (BIC) che si ottengono per ogni modello accrescendo il numero delle compomenti della mistura nei due casi in cui le componenti sono supposte con uguale (E) o con diversa (V) variabilità.
+```{r}
+require(mclust)
+compxf <- mclustBIC(xf)
+compxf
+```
+*Insieme alla tabella degli indici, abbiamo un top-list con i 3 migliori modelli che si adattano ai dati. In questo caso il miglior modello, cioè quello con BIC in valore assoluto minore, è il modello a 2 componenti e uguale varianza.*
+
+E' possibile inoltre rappresentare i valori della tabella direttamente nel grafico dei valori dell'indice di adattamento (BIC). E' pertanto possibile valutare graficamente i valori e selezionare il numero di componenti ottimali che si individuano sull'asse delle ascisse in corrispondenza dei valori
+relativamente più vicini a zero (BIC in senso assoluto) nell'asse y.
+```{r}
+plot(compxf)
+```
+*Il valore migliore è quello più in alto rispetto all'asse y. La linea grigia si riferisce al modello mistura in cui le componenti Gaussiane hanno stessa varianza e medie differenti, mentre la linea nera si riferisce al modello mistura in cui le componenti Gaussiane hanno varianze e medie diverse.*
+Si noti che i modelli con un numero di componenti superiori a 8 con varianze diverse non vengono stimati per motivi di identificabilità.
+
+##Stima dei parametri del modello miscuglio tramite algoritmo EM.
+La funzione Mclust permette di stimare il modello scelto specificando: il numero delle componenti con l'input G=2, e se queste sono supposte con stesso parametro di scala modelNames = "E" oppure con diversa variabilità modelNames = "V". Nel summary, l'opzione parameters serve per richiedere i parametri stimati. Oltre al valore dell'indice di adattamento BIC, con la funzione summary si dispone anche del valore dell'indice definito integrated completed likelihood (ICL).
+
+```{r}
+mod1 <- Mclust(xf,G=2,modelNames = "E")
+summary(mod1, parameters = T)
+```
+*Quando si stima il modello che offre un indice di adattamento superiore agli altri (E,2) la stima dei parametri basata sull'algoritmo EM è data dal seguente valore della log verosimiglianza a convergenza l(theta)= -495.3293, con 4 parametri riferiti a mu1, mu2, sigma^2, fi (Mixing probabilities).*
+*La tabella clustering table riporta la numerosità complessiva delle donne assegnate alla prima (84) e alla seconda (13) compomente, rispettivamente.*
+
+*Il primo gruppo di donne, il più numeroso, pesa per quasi l'85%, mentre il secondo per il 15%. Si nota una notevole differenza tra il valor medio dei gruppi: 210 contro 293. La deviazione standard comune è di circa sqrt(904)= 30 mg/dl plasma di colesterolo. Si ipotizza quindi che il secondo gruppo di donne, caratterizzate da valori di colesterolo molto superiori, siano maggiormente predisposte allo sviluppo di malattie cardiovascolari.*
+
+##Rappresentazione della densità miscuglio
+```{r}
+plot(mod1, what = "density", xf,
+     xlab = "Valore del colesterolo nelle donne", lwd=3)
+```
+
+##Classificazione delle osservazioni nei gruppi
+Il grafico seguente permette di vedere quali valori del colesterolo appartengono al gruppo 1 e quali al gruppo 2 in base alla stima della massima probabilità a posteriori. Ad ogni valore del colesterolo viene associata un etichetta che indica il gruppo (1) o (2).
+```{r}
+plot(mod1, what="classification",     xlab = "Valore del colesterolo nelle donne")
+```
+
+Per valutare l'incertezza della classificazione, confronto la funzione di ripartizione empirica con quella stimata dal modello miscuglio.
+```{r}
+denxf <- densityMclust(xf)
+plot(denxf, what = "diagnostic", type="cdf")
+```
+*Le due curve si sovrappongono perciò la classificazione è adeguata.*
+
+Eseguo la stessa analisi sulla popolazione maschile (anche se il p-value del test di Shapiro era quasi 0.05)
+```{r}
+compxm <- mclustBIC(xm)
+compxm
+```
+*Secondo il criterio BIC, il miglior modello è quello ad una componente. Questo significa che non ci sono cluster da ricercare.*
+
+Stimo la media e la sd del gruppo.
+```{r}
+length(xm)
+mean(xm)
+sd(xm)
+```
+*Tra i 103 uomini del campione, abbiamo che il valor medio di colesterolo nel sangue è pari a 218 mg/dL, con uno scarto di +- 45.*
+
+Si noti che è possibile fissare il livello epsilon riferito alle iterazioni dell'algoritmo specificando come parametro di input --> control = emControl assegnando il valore delle tolleranza.
+```{r}
+mod1bis <- Mclust(xf,G=2,modelNames = "E", control = emControl(tol = 10^-6))
+summary(mod1bis, parameters = T)
+```
+*Rispetto a prima, sono lievemente cambiati i parametri e le frequenze dei gruppi.*
